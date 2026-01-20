@@ -10,7 +10,7 @@ export const courseService = {
    * Get all published courses (public)
    */
   async getPublishedCourses(): Promise<ApiResponse<Course[]>> {
-    const response = await axiosInstance.get<ApiResponse<Course[]>>("/course");
+    const response = await axiosInstance.get<ApiResponse<Course[]>>("/api/course");
     return response.data;
   },
 
