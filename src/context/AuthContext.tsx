@@ -1,59 +1,51 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { Session, User } from '@supabase/supabase-js';
-
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  isVerified: boolean;
-  isAdmin: boolean;
-}
+import { authService, User } from '@/services';
+import { setAccessToken } from '@/lib/axios';
 
 interface AuthContextType {
-  user: UserProfile | null;
-  session: Session | null;
+  user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state and setup listener
+  // Initialize auth state
   useEffect(() => {
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        if (session?.user) {
-          await fetchUserProfile(session.user);
-        } else {
-          setUser(null);
-        }
-      }
-    );
-
-    // Then check for existing session
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
+        // Try to get user profile using existing refresh token cookie
+        const response = await authService.getProfile();
         
-        if (session?.user) {
-          await fetchUserProfile(session.user);
+        if (response.success && response.data) {
+          setUser(response.data);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        // If profile fetch fails, try to refresh token
+        try {
+          const refreshResponse = await authService.refreshToken();
+          
+          if (refreshResponse.success) {
+            // Try to get profile again with new access token
+            const profileResponse = await authService.getProfile();
+            if (profileResponse.success && profileResponse.data) {
+              setUser(profileResponse.data);
+            }
+          }
+        } catch (refreshError) {
+          // No valid session, user needs to login
+          console.log('No valid session found');
+          setUser(null);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -61,95 +53,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     initializeAuth();
 
+    // Listen for logout events from axios interceptor
+    const handleLogout = () => {
+      setUser(null);
+    };
+
+    window.addEventListener('auth:logout', handleLogout);
+
     return () => {
-      subscription.unsubscribe();
+      window.removeEventListener('auth:logout', handleLogout);
     };
   }, []);
-
-  // Fetch user profile data from the profiles table
-  const fetchUserProfile = async (authUser: User) => {
-    try {
-      // Using type assertion to bypass TypeScript's type checking
-      const response = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-      
-      const { data, error } = response as unknown as { 
-        data: { 
-          id: string;
-          name: string;
-          email: string;
-          phone?: string;
-          is_verified: boolean;
-          is_admin: boolean;
-        } | null;
-        error: Error | null;
-      };
-
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
-        // Map database fields to our UserProfile interface
-        setUser({
-          id: data.id,
-          name: data.name || '',
-          email: data.email || '',
-          phone: data.phone || '',
-          isVerified: data.is_verified || false,
-          isAdmin: data.is_admin || false,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      setUser(null);
-    }
-  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const response = await authService.login({ email, password });
 
-      if (error) {
-        throw error;
+      console.log('Login response:', response);
+
+      if (response.success && response.data) {
+        console.log('Setting user:', response.data.user);
+        setUser(response.data.user);
+        toast.success('Logged in successfully');
       }
-
-      toast.success('Logged in successfully');
     } catch (error: any) {
-      toast.error(error.message || 'Login failed. Please try again.');
+      console.error('Login error:', error);
+      const message = error?.response?.data?.message || 'Login failed. Please try again.';
+      toast.error(message);
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (firstName: string, lastName: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-        },
+      const response = await authService.register({ 
+        firstName, 
+        lastName, 
+        email, 
+        password 
       });
 
-      if (error) {
-        throw error;
+      if (response.success) {
+        toast.success('Registration successful! Please login.');
       }
-
-      toast.success('Registration successful. Please verify your email.');
     } catch (error: any) {
-      toast.error(error.message || 'Registration failed. Please try again.');
+      const message = error?.response?.data?.message || 'Registration failed. Please try again.';
+      toast.error(message);
       throw error;
     } finally {
       setIsLoading(false);
@@ -158,15 +111,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      await authService.logout();
+      setUser(null);
+      setAccessToken(null);
       toast.success('Logged out successfully');
     } catch (error: any) {
-      toast.error(error.message || 'Logout failed');
+      const message = error?.response?.data?.message || 'Logout failed';
+      toast.error(message);
+    }
+  };
+
+  const refreshUser = async () => {
+    try {
+      const response = await authService.getProfile();
+      if (response.success && response.data) {
+        setUser(response.data);
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -12,9 +12,10 @@ import { motion } from 'framer-motion';
 
 const Profile = () => {
   const { user, logout } = useAuth();
-  const [name, setName] = useState(user?.name || '');
+  const [firstName, setFirstName] = useState(user?.firstName || '');
+  const [lastName, setLastName] = useState(user?.lastName || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [mobile, setMobile] = useState(user?.mobile || '');
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
 
@@ -22,15 +23,21 @@ const Profile = () => {
     e.preventDefault();
     setIsSaving(true);
     
-    // Simulate API call
+    // TODO: Implement profile update API call
     setTimeout(() => {
       setIsSaving(false);
       toast.success('Profile updated successfully');
     }, 1000);
   };
 
-  const handleVerifyPhone = () => {
-    toast.info('Phone verification functionality coming soon');
+  const getInitials = () => {
+    if (!user) return '?';
+    return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase();
+  };
+
+  const getFullName = () => {
+    if (!user) return '';
+    return `${user.firstName} ${user.lastName}`;
   };
 
   return (
@@ -63,24 +70,34 @@ const Profile = () => {
                   <CardHeader>
                     <div className="flex items-center gap-4">
                       <Avatar className="h-16 w-16">
-                        <AvatarImage src="/placeholder.svg" alt={user?.name} />
-                        <AvatarFallback className="text-lg">{user?.name.charAt(0).toUpperCase()}</AvatarFallback>
+                        <AvatarImage src={user?.avatar} alt={getFullName()} />
+                        <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle>{user?.name}</CardTitle>
+                        <CardTitle>{getFullName()}</CardTitle>
                         <CardDescription>{user?.email}</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <form onSubmit={handleSaveProfile} className="space-y-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input
-                          id="name"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                        />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="firstName">First Name</Label>
+                          <Input
+                            id="firstName"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="lastName">Last Name</Label>
+                          <Input
+                            id="lastName"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                          />
+                        </div>
                       </div>
                       
                       <div className="space-y-2">
@@ -90,26 +107,20 @@ const Profile = () => {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
+                          disabled
                         />
                       </div>
                       
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
+                        <Label htmlFor="mobile">Mobile Number</Label>
                         <div className="flex items-center gap-2">
                           <Input
-                            id="phone"
+                            id="mobile"
                             type="tel"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
+                            value={mobile}
+                            onChange={(e) => setMobile(e.target.value)}
                             placeholder="+91 1234567890"
                           />
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={handleVerifyPhone}
-                          >
-                            Verify
-                          </Button>
                         </div>
                         {user?.isVerified ? (
                           <p className="text-xs text-green-500">Verified</p>
