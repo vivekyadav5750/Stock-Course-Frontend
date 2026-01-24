@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { authService } from '@/services';
 import { Loader2 } from 'lucide-react';
+import { getErrorMessage } from '@/lib/utils';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -101,7 +102,7 @@ const Login = () => {
         toast.info('Please login with your credentials.');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to verify OTP. Please try again.');
+      setError(getErrorMessage(err, 'Failed to verify OTP. Please try again.'));
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +119,7 @@ const Login = () => {
       });
       toast.success('Verification code resent to your email!');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to resend verification code.');
+      setError(getErrorMessage(err, 'Failed to resend verification code.'));
     } finally {
       setIsLoading(false);
     }

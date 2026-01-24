@@ -9,6 +9,7 @@ import { authService } from "@/services";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { getErrorMessage } from "@/lib/utils";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ export default function ChangePassword() {
       toast.success("Password changed successfully!");
       setSuccess(true);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to change password. Please try again.");
+      setError(getErrorMessage(err, "Failed to change password. Please try again."));
     } finally {
       setLoading(false);
     }

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { authService } from "@/services";
 import { Loader2, CheckCircle2, Mail } from "lucide-react";
+import { getErrorMessage } from "@/lib/utils";
 
 type Step = "email" | "otp" | "password" | "success";
 
@@ -32,7 +33,7 @@ export default function ForgotPassword() {
       });
       setCurrentStep("otp");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send OTP. Please try again.");
+      setError(getErrorMessage(err, "Failed to send OTP. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -53,7 +54,7 @@ export default function ForgotPassword() {
       // OTP verified successfully, proceed to password reset
       setCurrentStep("password");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid OTP. Please try again.");
+      setError(getErrorMessage(err, "Invalid OTP. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -82,7 +83,7 @@ export default function ForgotPassword() {
       });
       setCurrentStep("success");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to reset password. Please try again.");
+      setError(getErrorMessage(err, "Failed to reset password. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -99,7 +100,7 @@ export default function ForgotPassword() {
       });
       setError(""); // Clear any previous errors
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to resend OTP.");
+      setError(getErrorMessage(err, "Failed to resend OTP."));
     } finally {
       setLoading(false);
     }
