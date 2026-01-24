@@ -50,6 +50,59 @@ export interface RegisterResponse {
   user: User;
 }
 
+// OTP Verification types
+export interface SendOTPRequest {
+  email: string;
+  purpose: "signup" | "forgot-password" | "change-password";
+}
+
+export interface SendOTPResponse {
+  message: string;
+}
+
+export interface VerifyOTPRequest {
+  email: string;
+  otp: string;
+  purpose: "signup" | "forgot-password" | "change-password";
+}
+
+export interface VerifyOTPResponse {
+  message: string;
+}
+
+// Profile Update types
+export interface UpdateProfileRequest {
+  firstName?: string;
+  lastName?: string;
+  mobile?: string;
+  avatar?: string;
+  email?: string; // If email is being changed
+  otp?: string; // Required if email is being changed
+}
+
+export interface UpdateProfileResponse {
+  user: User;
+}
+
+// Password types
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  newPassword: string;
+}
+
+export interface PasswordResponse {
+  message: string;
+}
+
 // Course types
 export interface Course {
   _id: string;
