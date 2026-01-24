@@ -14,6 +14,8 @@ import Register from "./pages/Register";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import Profile from "./pages/Profile";
+import ForgotPassword from "./pages/ForgotPassword";
+import ChangePassword from "./pages/ChangePassword";
 import AdminDashboard from "./pages/admin/Dashboard";
 import CourseManagement from "./pages/admin/CourseManagement";
 import NotFound from "./pages/NotFound";
@@ -63,6 +65,7 @@ const App = () => (
               <Route index element={<Index />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="courses" element={<Courses />} />
               <Route path="courses/:id" element={<CourseDetail />} />
               <Route 
@@ -70,6 +73,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="change-password" 
+                element={
+                  <ProtectedRoute>
+                    <ChangePassword />
                   </ProtectedRoute>
                 } 
               />

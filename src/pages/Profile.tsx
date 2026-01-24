@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import { motion } from 'framer-motion';
 
 const Profile = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -183,7 +185,15 @@ const Profile = () => {
                   <CardContent className="space-y-6">
                     <div>
                       <h3 className="text-lg font-medium mb-2">Password</h3>
-                      <Button variant="outline">Change Password</Button>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Change your password with OTP verification
+                      </p>
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigate('/change-password')}
+                      >
+                        Change Password
+                      </Button>
                     </div>
                     
                     <div>

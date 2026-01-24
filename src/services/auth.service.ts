@@ -6,6 +6,16 @@ import type {
   RegisterRequest,
   RegisterResponse,
   User,
+  SendOTPRequest,
+  SendOTPResponse,
+  VerifyOTPRequest,
+  VerifyOTPResponse,
+  UpdateProfileRequest,
+  UpdateProfileResponse,
+  ChangePasswordRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  PasswordResponse,
 } from "./types";
 
 /**
@@ -106,5 +116,67 @@ export const authService = {
     } catch {
       return false;
     }
+  },
+
+  /**
+   * Send OTP for verification (signup, forgot password, change password)
+   */
+  async sendOTP(data: SendOTPRequest): Promise<ApiResponse<SendOTPResponse>> {
+    const response = await axiosInstance.post<ApiResponse<SendOTPResponse>>(
+      "/otp/send",
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Verify OTP code
+   */
+  async verifyOTP(data: VerifyOTPRequest): Promise<ApiResponse<VerifyOTPResponse>> {
+    const response = await axiosInstance.post<ApiResponse<VerifyOTPResponse>>(
+      "/otp/verify",
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Update user profile
+   */
+  async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UpdateProfileResponse>> {
+    const response = await axiosInstance.put<ApiResponse<UpdateProfileResponse>>(
+      "/auth/profile",
+      data
+    );
+
+    // Normalize user data
+    if (response.data.data?.user) {
+      response.data.data.user = normalizeUser(response.data.data.user);
+    }
+
+    return response.data;
+  },
+
+  /**
+   * Change password (requires current password, no OTP needed)
+   */
+  async changePassword(data: ChangePasswordRequest): Promise<ApiResponse<PasswordResponse>> {
+    const response = await axiosInstance.put<ApiResponse<PasswordResponse>>(
+      "/auth/change-password",
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Reset password (after OTP verification)
+   * Note: OTP must be verified first using sendOTP and verifyOTP
+   */
+  async resetPassword(data: ResetPasswordRequest): Promise<ApiResponse<PasswordResponse>> {
+    const response = await axiosInstance.post<ApiResponse<PasswordResponse>>(
+      "/auth/reset-password",
+      data
+    );
+    return response.data;
   },
 };
