@@ -22,22 +22,8 @@ export const useAuth = () => {
   const dispatch = useAppDispatch();
   const { user, status, message, isAuthenticated } = useAppSelector((state) => state.user);
 
-  // Initialize auth on mount
-  useEffect(() => {
-    dispatch(initializeAuth());
-  }, [dispatch]);
-
-  // Listen for logout events from axios interceptor
-  useEffect(() => {
-    const handleLogout = () => {
-      dispatch(logoutUser());
-    };
-
-    window.addEventListener('auth:logout', handleLogout);
-    return () => {
-      window.removeEventListener('auth:logout', handleLogout);
-    };
-  }, [dispatch]);
+  // Note: initializeAuth is called once in App.tsx, not here
+  // This prevents multiple initialization calls
 
   const login = async (email: string, password: string) => {
     try {
