@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { courseService, moduleService, lessonService, Course, Module, Lesson } from '@/services';
+import { useAuth } from '@/hooks/useAuth';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { getAllCourses, createCourse, updateCourse, deleteCourse } from '@/redux/slice/course';
+import { getModulesByCourse, createModule, updateModule, deleteModule, reorderModules } from '@/redux/slice/module';
+import { getLessonsByModule, createLesson, updateLesson, deleteLesson, reorderLessons } from '@/redux/slice/lesson';
+import type { Course } from '@/redux/slice/course';
+import type { Module } from '@/redux/slice/module';
+import type { Lesson } from '@/redux/slice/lesson';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,12 +54,15 @@ import {
 const CourseManagement = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
-  // State for courses, modules, and lessons
-  const [courses, setCourses] = useState<Course[]>([]);
+  // Redux state
+  const { courses, status: courseStatus } = useAppSelector((state) => state.course);
+  const { modules, status: moduleStatus } = useAppSelector((state) => state.module);
+  const { lessons, status: lessonStatus } = useAppSelector((state) => state.lesson);
+
+  // Local state
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [modules, setModules] = useState<Module[]>([]);
-  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Dialog states
@@ -67,10 +76,9 @@ const CourseManagement = () => {
     title: '',
     description: '',
     category: '',
-    level: 'Basic' as 'Basic' | 'Intermediate' | 'Advanced',
+    level: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
     price: '',
-    discount: '',
-    duration: '',
+    duration: 0,
     thumbnail: '',
   });
 
@@ -84,13 +92,12 @@ const CourseManagement = () => {
   const [lessonForm, setLessonForm] = useState({
     moduleId: '',
     title: '',
-    contentType: 'video' as 'video' | 'pdf' | 'text',
+    description: '',
     videoUrl: '',
-    pdfUrl: '',
-    textContent: '',
-    duration: '',
-    order: '',
-    isPreview: false,
+    duration: 0,
+    order: 0,
+    isFree: false,
+    resources: [] as { title: string; url: string; type: string }[],
   });
 
   // Check admin permission
@@ -106,11 +113,7 @@ const CourseManagement = () => {
     const fetchCourses = async () => {
       try {
         setIsLoading(true);
-        const response = await courseService.getAllCourses();
-        
-        if (response.success && response.data) {
-          setCourses(response.data);
-        }
+        await dispatch(getAllCourses({})).unwrap();
       } catch (error: any) {
         console.error('Error fetching courses:', error);
         toast.error('Failed to load courses');
@@ -122,7 +125,7 @@ const CourseManagement = () => {
     if (user?.isAdmin) {
       fetchCourses();
     }
-  }, [user]);
+  }, [user, dispatch]);
 
   // Fetch modules when a course is selected
   useEffect(() => {
@@ -130,10 +133,9 @@ const CourseManagement = () => {
       if (!selectedCourse) return;
 
       try {
-        const response = await moduleService.getModulesByCourse(selectedCourse._id);
-        
-        if (response.success && response.data) {
-          setModules(response.data);
+        const courseId = selectedCourse.id || selectedCourse._id;
+        if (courseId) {
+          await dispatch(getModulesByCourse(courseId)).unwrap();
         }
       } catch (error: any) {
         console.error('Error fetching modules:', error);
@@ -142,7 +144,7 @@ const CourseManagement = () => {
     };
 
     fetchModules();
-  }, [selectedCourse]);
+  }, [selectedCourse, dispatch]);
 
   // Handle create course
   const handleCreateCourse = async (e: React.FormEvent) => {
@@ -154,26 +156,20 @@ const CourseManagement = () => {
     }
 
     try {
-      const response = await courseService.createCourse({
+      await dispatch(createCourse({
         title: courseForm.title,
         description: courseForm.description,
         category: courseForm.category,
         level: courseForm.level,
         price: parseFloat(courseForm.price) || 0,
-        discount: parseFloat(courseForm.discount) || 0,
-        duration: courseForm.duration,
         thumbnail: courseForm.thumbnail,
-      });
+      })).unwrap();
 
-      if (response.success && response.data) {
-        setCourses([...courses, response.data]);
-        setNewCourseDialog(false);
-        resetCourseForm();
-        toast.success('Course created successfully');
-      }
+      setNewCourseDialog(false);
+      resetCourseForm();
+      toast.success('Course created successfully');
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to create course';
-      toast.error(message);
+      toast.error(error || 'Failed to create course');
     }
   };
 
@@ -184,28 +180,26 @@ const CourseManagement = () => {
     if (!selectedCourse) return;
 
     try {
-      const response = await courseService.updateCourse(selectedCourse._id, {
-        title: courseForm.title,
-        description: courseForm.description,
-        category: courseForm.category,
-        level: courseForm.level,
-        price: parseFloat(courseForm.price) || 0,
-        discount: parseFloat(courseForm.discount) || 0,
-        duration: courseForm.duration,
-        thumbnail: courseForm.thumbnail,
-      });
+      const courseId = selectedCourse.id || selectedCourse._id;
+      if (!courseId) return;
 
-      if (response.success && response.data) {
-        setCourses(
-          courses.map((c) => (c._id === response.data!._id ? response.data! : c))
-        );
-        setEditCourseDialog(false);
-        setSelectedCourse(response.data);
-        toast.success('Course updated successfully');
-      }
+      const updatedCourse = await dispatch(updateCourse({
+        courseId: courseId,
+        data: {
+          title: courseForm.title,
+          description: courseForm.description,
+          category: courseForm.category,
+          level: courseForm.level,
+          price: parseFloat(courseForm.price) || 0,
+          thumbnail: courseForm.thumbnail,
+        },
+      })).unwrap();
+
+      setEditCourseDialog(false);
+      setSelectedCourse(updatedCourse);
+      toast.success('Course updated successfully');
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to update course';
-      toast.error(message);
+      toast.error(error || 'Failed to update course');
     }
   };
 
@@ -214,40 +208,20 @@ const CourseManagement = () => {
     if (!confirm('Are you sure you want to delete this course?')) return;
 
     try {
-      await courseService.deleteCourse(courseId);
-      setCourses(courses.filter((c) => c._id !== courseId));
-      if (selectedCourse?._id === courseId) {
+      await dispatch(deleteCourse(courseId)).unwrap();
+      if (selectedCourse?.id === courseId || selectedCourse?._id === courseId) {
         setSelectedCourse(null);
       }
       toast.success('Course deleted successfully');
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to delete course';
-      toast.error(message);
+      toast.error(error || 'Failed to delete course');
     }
   };
 
   // Handle toggle publish
   const handleTogglePublish = async (courseId: string) => {
-    try {
-      const response = await courseService.togglePublish(courseId);
-      
-      if (response.success && response.data) {
-        setCourses(
-          courses.map((c) => (c._id === response.data!._id ? response.data! : c))
-        );
-        if (selectedCourse?._id === courseId) {
-          setSelectedCourse(response.data);
-        }
-        toast.success(
-          response.data.isPublished
-            ? 'Course published successfully'
-            : 'Course unpublished successfully'
-        );
-      }
-    } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to update course';
-      toast.error(message);
-    }
+    // Note: Toggle publish endpoint needs to be added to Redux slice
+    toast.info('Toggle publish feature needs to be implemented in Redux');
   };
 
   // Handle create module
@@ -260,21 +234,21 @@ const CourseManagement = () => {
     }
 
     try {
-      const response = await moduleService.createModule({
-        course: selectedCourse._id,
-        title: moduleForm.title,
-        order: parseInt(moduleForm.order) || modules.length + 1,
-      });
+      const courseId = selectedCourse.id || selectedCourse._id;
+      if (!courseId) return;
 
-      if (response.success && response.data) {
-        setModules([...modules, response.data]);
-        setNewModuleDialog(false);
-        resetModuleForm();
-        toast.success('Module created successfully');
-      }
+      await dispatch(createModule({
+        courseId,
+        title: moduleForm.title,
+        description: '',
+        order: parseInt(moduleForm.order) || modules.length + 1,
+      })).unwrap();
+
+      setNewModuleDialog(false);
+      resetModuleForm();
+      toast.success('Module created successfully');
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to create module';
-      toast.error(message);
+      toast.error(error || 'Failed to create module');
     }
   };
 
@@ -283,12 +257,10 @@ const CourseManagement = () => {
     if (!confirm('Are you sure you want to delete this module?')) return;
 
     try {
-      await moduleService.deleteModule(moduleId);
-      setModules(modules.filter((m) => m._id !== moduleId));
+      await dispatch(deleteModule(moduleId)).unwrap();
       toast.success('Module deleted successfully');
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to delete module';
-      toast.error(message);
+      toast.error(error || 'Failed to delete module');
     }
   };
 
@@ -302,34 +274,27 @@ const CourseManagement = () => {
     }
 
     try {
-      const response = await lessonService.createLesson({
-        course: selectedCourse._id,
-        module: lessonForm.moduleId,
-        title: lessonForm.title,
-        contentType: lessonForm.contentType,
-        videoUrl: lessonForm.videoUrl,
-        pdfUrl: lessonForm.pdfUrl,
-        textContent: lessonForm.textContent,
-        duration: lessonForm.duration,
-        order: parseInt(lessonForm.order) || 1,
-        isPreview: lessonForm.isPreview,
-      });
+      const courseId = selectedCourse.id || selectedCourse._id;
+      if (!courseId) return;
 
-      if (response.success && response.data) {
-        // Refresh lessons for the selected module
-        const lessonsResponse = await lessonService.getLessonsByModule(
-          lessonForm.moduleId
-        );
-        if (lessonsResponse.success && lessonsResponse.data) {
-          setLessons(lessonsResponse.data);
-        }
-        setNewLessonDialog(false);
-        resetLessonForm();
-        toast.success('Lesson created successfully');
-      }
+      await dispatch(createLesson({
+        moduleId: lessonForm.moduleId,
+        courseId,
+        title: lessonForm.title,
+        description: lessonForm.description,
+        videoUrl: lessonForm.videoUrl,
+        order: lessonForm.order || 1,
+        isFree: lessonForm.isFree,
+      })).unwrap();
+
+      // Refresh lessons for the selected module
+      await dispatch(getLessonsByModule(lessonForm.moduleId)).unwrap();
+
+      setNewLessonDialog(false);
+      resetLessonForm();
+      toast.success('Lesson created successfully');
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to create lesson';
-      toast.error(message);
+      toast.error(error || 'Failed to create lesson');
     }
   };
 
@@ -338,8 +303,7 @@ const CourseManagement = () => {
     if (!confirm('Are you sure you want to delete this lesson?')) return;
 
     try {
-      await lessonService.deleteLesson(lessonId);
-      setLessons(lessons.filter((l) => l._id !== lessonId));
+      await dispatch(deleteLesson(lessonId)).unwrap();
       toast.success('Lesson deleted successfully');
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Failed to delete lesson';
@@ -353,10 +317,9 @@ const CourseManagement = () => {
       title: '',
       description: '',
       category: '',
-      level: 'Basic',
+      level: 'beginner',
       price: '',
-      discount: '',
-      duration: '',
+      duration: 0,
       thumbnail: '',
     });
   };
@@ -372,13 +335,12 @@ const CourseManagement = () => {
     setLessonForm({
       moduleId: '',
       title: '',
-      contentType: 'video',
+      description: '',
       videoUrl: '',
-      pdfUrl: '',
-      textContent: '',
-      duration: '',
-      order: '',
-      isPreview: false,
+      duration: 0,
+      order: 0,
+      isFree: false,
+      resources: [],
     });
   };
 
@@ -391,8 +353,7 @@ const CourseManagement = () => {
       category: course.category,
       level: course.level,
       price: course.price.toString(),
-      discount: course.discount?.toString() || '',
-      duration: course.duration,
+      duration: course.duration || 0,
       thumbnail: course.thumbnail || '',
     });
     setEditCourseDialog(true);
@@ -488,11 +449,11 @@ const CourseManagement = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Basic">Basic</SelectItem>
-                          <SelectItem value="Intermediate">
+                          <SelectItem value="beginner">Beginner</SelectItem>
+                          <SelectItem value="intermediate">
                             Intermediate
                           </SelectItem>
-                          <SelectItem value="Advanced">Advanced</SelectItem>
+                          <SelectItem value="advanced">Advanced</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -511,32 +472,6 @@ const CourseManagement = () => {
                         placeholder="99.99"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="discount">Discount (%)</Label>
-                      <Input
-                        id="discount"
-                        type="number"
-                        value={courseForm.discount}
-                        onChange={(e) =>
-                          setCourseForm({
-                            ...courseForm,
-                            discount: e.target.value,
-                          })
-                        }
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="duration">Duration</Label>
-                    <Input
-                      id="duration"
-                      value={courseForm.duration}
-                      onChange={(e) =>
-                        setCourseForm({ ...courseForm, duration: e.target.value })
-                      }
-                      placeholder="e.g., 10 hours"
-                    />
                   </div>
                   <div>
                     <Label htmlFor="thumbnail">Thumbnail URL</Label>
@@ -595,15 +530,18 @@ const CourseManagement = () => {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course) => (
+                {courses.map((course) => {
+                  const courseId = course.id || course._id;
+                  const selectedId = selectedCourse?.id || selectedCourse?._id;
+                  return (
                   <motion.div
-                    key={course._id}
+                    key={courseId}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
                     <Card
                       className={`cursor-pointer transition-all ${
-                        selectedCourse?._id === course._id
+                        selectedId === courseId
                           ? 'ring-2 ring-primary'
                           : ''
                       }`}
@@ -653,7 +591,7 @@ const CourseManagement = () => {
                           variant="outline"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleTogglePublish(course._id);
+                            if (courseId) handleTogglePublish(courseId);
                           }}
                         >
                           {course.isPublished ? (
@@ -667,7 +605,7 @@ const CourseManagement = () => {
                           variant="destructive"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteCourse(course._id);
+                            if (courseId) handleDeleteCourse(courseId);
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -675,7 +613,8 @@ const CourseManagement = () => {
                       </CardFooter>
                     </Card>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </TabsContent>
@@ -763,8 +702,10 @@ const CourseManagement = () => {
                   <div className="space-y-4">
                     {modules
                       .sort((a, b) => a.order - b.order)
-                      .map((module, index) => (
-                        <Card key={module._id}>
+                      .map((module, index) => {
+                        const moduleId = module.id || module._id;
+                        return (
+                        <Card key={moduleId}>
                           <CardHeader>
                             <div className="flex justify-between items-start">
                               <div>
@@ -775,14 +716,15 @@ const CourseManagement = () => {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleDeleteModule(module._id)}
+                                onClick={() => moduleId && handleDeleteModule(moduleId)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </CardHeader>
                         </Card>
-                      ))}
+                        );
+                      })}
                   </div>
                 )}
               </TabsContent>
@@ -823,11 +765,14 @@ const CourseManagement = () => {
                                 <SelectValue placeholder="Select a module" />
                               </SelectTrigger>
                               <SelectContent>
-                                {modules.map((module) => (
-                                  <SelectItem key={module._id} value={module._id}>
+                                {modules.map((module) => {
+                                  const moduleId = module.id || module._id;
+                                  return (
+                                  <SelectItem key={moduleId} value={moduleId || ''}>
                                     {module.title}
                                   </SelectItem>
-                                ))}
+                                  );
+                                })}
                               </SelectContent>
                             </Select>
                           </div>
@@ -846,91 +791,35 @@ const CourseManagement = () => {
                             />
                           </div>
                           <div>
-                            <Label htmlFor="contentType">Content Type</Label>
-                            <Select
-                              value={lessonForm.contentType}
-                              onValueChange={(value: any) =>
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                              id="description"
+                              value={lessonForm.description}
+                              onChange={(e) =>
                                 setLessonForm({
                                   ...lessonForm,
-                                  contentType: value,
+                                  description: e.target.value,
                                 })
                               }
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="video">Video</SelectItem>
-                                <SelectItem value="pdf">PDF</SelectItem>
-                                <SelectItem value="text">Text</SelectItem>
-                              </SelectContent>
-                            </Select>
+                              rows={3}
+                            />
                           </div>
-                          {lessonForm.contentType === 'video' && (
-                            <div>
-                              <Label htmlFor="videoUrl">Video URL</Label>
-                              <Input
-                                id="videoUrl"
-                                type="url"
-                                value={lessonForm.videoUrl}
-                                onChange={(e) =>
-                                  setLessonForm({
-                                    ...lessonForm,
-                                    videoUrl: e.target.value,
-                                  })
-                                }
-                                placeholder="https://..."
-                              />
-                            </div>
-                          )}
-                          {lessonForm.contentType === 'pdf' && (
-                            <div>
-                              <Label htmlFor="pdfUrl">PDF URL</Label>
-                              <Input
-                                id="pdfUrl"
-                                type="url"
-                                value={lessonForm.pdfUrl}
-                                onChange={(e) =>
-                                  setLessonForm({
-                                    ...lessonForm,
-                                    pdfUrl: e.target.value,
-                                  })
-                                }
-                                placeholder="https://..."
-                              />
-                            </div>
-                          )}
-                          {lessonForm.contentType === 'text' && (
-                            <div>
-                              <Label htmlFor="textContent">Text Content</Label>
-                              <Textarea
-                                id="textContent"
-                                value={lessonForm.textContent}
-                                onChange={(e) =>
-                                  setLessonForm({
-                                    ...lessonForm,
-                                    textContent: e.target.value,
-                                  })
-                                }
-                                rows={6}
-                              />
-                            </div>
-                          )}
+                          <div>
+                            <Label htmlFor="videoUrl">Video URL</Label>
+                            <Input
+                              id="videoUrl"
+                              type="url"
+                              value={lessonForm.videoUrl}
+                              onChange={(e) =>
+                                setLessonForm({
+                                  ...lessonForm,
+                                  videoUrl: e.target.value,
+                                })
+                              }
+                              placeholder="https://..."
+                            />
+                          </div>
                           <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="lessonDuration">Duration</Label>
-                              <Input
-                                id="lessonDuration"
-                                value={lessonForm.duration}
-                                onChange={(e) =>
-                                  setLessonForm({
-                                    ...lessonForm,
-                                    duration: e.target.value,
-                                  })
-                                }
-                                placeholder="e.g., 15 min"
-                              />
-                            </div>
                             <div>
                               <Label htmlFor="lessonOrder">Order</Label>
                               <Input
@@ -940,29 +829,29 @@ const CourseManagement = () => {
                                 onChange={(e) =>
                                   setLessonForm({
                                     ...lessonForm,
-                                    order: e.target.value,
+                                    order: parseInt(e.target.value) || 0,
                                   })
                                 }
                                 placeholder="1"
                               />
                             </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id="isPreview"
-                              checked={lessonForm.isPreview}
-                              onChange={(e) =>
-                                setLessonForm({
-                                  ...lessonForm,
-                                  isPreview: e.target.checked,
-                                })
-                              }
-                              className="rounded"
-                            />
-                            <Label htmlFor="isPreview">
-                              Allow preview (free access)
-                            </Label>
+                            <div className="flex items-center space-x-2 pt-6">
+                              <input
+                                type="checkbox"
+                                id="isFree"
+                                checked={lessonForm.isFree}
+                                onChange={(e) =>
+                                  setLessonForm({
+                                    ...lessonForm,
+                                    isFree: e.target.checked,
+                                  })
+                                }
+                                className="rounded"
+                              />
+                              <Label htmlFor="isFree">
+                                Free lesson
+                              </Label>
+                            </div>
                           </div>
                         </div>
                         <DialogFooter className="mt-6">
@@ -1003,28 +892,22 @@ const CourseManagement = () => {
                   <div className="space-y-4">
                     {lessons
                       .sort((a, b) => a.order - b.order)
-                      .map((lesson) => (
-                        <Card key={lesson._id}>
+                      .map((lesson) => {
+                        const lessonId = lesson.id || lesson._id;
+                        return (
+                        <Card key={lessonId}>
                           <CardHeader>
                             <div className="flex justify-between items-start">
                               <div>
                                 <CardTitle className="text-lg flex items-center gap-2">
-                                  {lesson.contentType === 'video' && (
-                                    <Video className="h-4 w-4" />
-                                  )}
-                                  {lesson.contentType === 'pdf' && (
-                                    <FileText className="h-4 w-4" />
-                                  )}
-                                  {lesson.contentType === 'text' && (
-                                    <BookOpen className="h-4 w-4" />
-                                  )}
+                                  <Video className="h-4 w-4" />
                                   {lesson.title}
                                 </CardTitle>
                                 <CardDescription>
-                                  {lesson.duration && `Duration: ${lesson.duration}`}
-                                  {lesson.isPreview && (
+                                  {lesson.duration && `Duration: ${lesson.duration} min`}
+                                  {lesson.isFree && (
                                     <Badge variant="outline" className="ml-2">
-                                      Preview
+                                      Free
                                     </Badge>
                                   )}
                                 </CardDescription>
@@ -1032,14 +915,15 @@ const CourseManagement = () => {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleDeleteLesson(lesson._id)}
+                                onClick={() => lessonId && handleDeleteLesson(lessonId)}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </CardHeader>
                         </Card>
-                      ))}
+                        );
+                      })}
                   </div>
                 )}
               </TabsContent>
@@ -1101,9 +985,9 @@ const CourseManagement = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Basic">Basic</SelectItem>
-                        <SelectItem value="Intermediate">Intermediate</SelectItem>
-                        <SelectItem value="Advanced">Advanced</SelectItem>
+                        <SelectItem value="beginner">Beginner</SelectItem>
+                        <SelectItem value="intermediate">Intermediate</SelectItem>
+                        <SelectItem value="advanced">Advanced</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1121,27 +1005,6 @@ const CourseManagement = () => {
                       }
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="editDiscount">Discount (%)</Label>
-                    <Input
-                      id="editDiscount"
-                      type="number"
-                      value={courseForm.discount}
-                      onChange={(e) =>
-                        setCourseForm({ ...courseForm, discount: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="editDuration">Duration</Label>
-                  <Input
-                    id="editDuration"
-                    value={courseForm.duration}
-                    onChange={(e) =>
-                      setCourseForm({ ...courseForm, duration: e.target.value })
-                    }
-                  />
                 </div>
                 <div>
                   <Label htmlFor="editThumbnail">Thumbnail URL</Label>

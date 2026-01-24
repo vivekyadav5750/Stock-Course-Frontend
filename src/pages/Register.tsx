@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { authService } from "@/services";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -15,6 +15,7 @@ type Step = "register" | "otp" | "success";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { register, sendOTP, verifyOTP } = useAuth();
   const [currentStep, setCurrentStep] = useState<Step>("register");
   
   const [firstName, setFirstName] = useState("");
@@ -50,18 +51,9 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await authService.register({
-        firstName,
-        lastName,
-        email,
-        password,
-        mobile: mobile || undefined,
-      });
+      await register(firstName, lastName, email, password, mobile || undefined);
       
-      await authService.sendOTP({
-        email,
-        purpose: "signup",
-      });
+      await sendOTP(email, "signup");
       
       toast.success("Account created! Verification code sent to your email.");
       setCurrentStep("otp");
@@ -78,11 +70,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await authService.verifyOTP({
-        email,
-        otp,
-        purpose: "signup",
-      });
+      await verifyOTP(email, otp, "signup");
       
       toast.success("Account activated! You can now login.");
       setCurrentStep("success");
@@ -98,10 +86,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await authService.sendOTP({
-        email,
-        purpose: "signup",
-      });
+      await sendOTP(email, "signup");
       toast.success("Verification code resent to your email!");
     } catch (err: any) {
       setError(getErrorMessage(err, "Failed to resend verification code."));

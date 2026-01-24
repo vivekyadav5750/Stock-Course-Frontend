@@ -5,15 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { authService } from "@/services";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/hooks/useAuth";
 import { getErrorMessage } from "@/lib/utils";
 
 export default function ChangePassword() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, changePassword } = useAuth();
   
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -46,10 +45,7 @@ export default function ChangePassword() {
     setLoading(true);
 
     try {
-      await authService.changePassword({
-        currentPassword,
-        newPassword,
-      });
+      await changePassword(currentPassword, newPassword);
       
       toast.success("Password changed successfully!");
       setSuccess(true);
