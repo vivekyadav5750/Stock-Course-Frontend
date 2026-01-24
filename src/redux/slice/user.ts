@@ -161,11 +161,14 @@ export const logoutUser = createAsyncThunk(
   "user/logout",
   async (_, { rejectWithValue }) => {
     try {
+      // Try to call logout API, but don't fail if it errors
       await axiosInstance.post("/auth/logout");
-      setAccessToken(null);
     } catch (error: any) {
-      const message = getErrorMessage(error, "Logout failed");
-      return rejectWithValue(message);
+      // Ignore logout API errors - user should be logged out locally anyway
+      console.log("Logout API failed (ignored):", error);
+    } finally {
+      // Always clear token locally, regardless of API result
+      setAccessToken(null);
     }
   }
 );
@@ -174,33 +177,18 @@ export const initializeAuth = createAsyncThunk(
   "user/initialize",
   async (_, { rejectWithValue }) => {
     try {
-      // Try to get user profile using existing refresh token cookie
+      // Try to get user profile - axios interceptor will handle token refresh automatically
       const response = await axiosInstance.get("/auth/profile");
       
       if (response.data.success && response.data.data) {
         return normalizeUser(response.data.data);
       }
+      
+      return rejectWithValue("No user data found");
     } catch (error) {
-      // If profile fetch fails, try to refresh token
-      try {
-        const refreshResponse = await axiosInstance.post("/auth/refresh-token");
-        
-        if (refreshResponse.data.success && refreshResponse.data.data?.accessToken) {
-          setAccessToken(refreshResponse.data.data.accessToken);
-          
-          // Try to get profile again with new access token
-          const profileResponse = await axiosInstance.get("/auth/profile");
-          if (profileResponse.data.success && profileResponse.data.data) {
-            return normalizeUser(profileResponse.data.data);
-          }
-        }
-      } catch (refreshError) {
-        // No valid session
-        return rejectWithValue("No valid session found");
-      }
+      // If it fails even after auto-refresh, user is not authenticated
+      return rejectWithValue("No valid session found");
     }
-    
-    return rejectWithValue("Failed to initialize auth");
   }
 );
 

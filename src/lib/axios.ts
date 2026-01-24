@@ -1,7 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 // API base URL - update this based on your backend URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:2000/api";
 
 // Create axios instance
 const axiosInstance = axios.create({
@@ -60,8 +60,12 @@ axiosInstance.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip refresh for these endpoints to prevent infinite loops
+    const skipRefreshUrls = ['/auth/refresh-token', '/auth/login', '/auth/signup', '/auth/logout', '/otp/send', '/otp/verify'];
+    const shouldSkipRefresh = skipRefreshUrls.some(url => originalRequest.url?.includes(url));
+
+    // If error is 401 and we haven't retried yet and not a refresh/auth endpoint
+    if (error.response?.status === 401 && !originalRequest._retry && !shouldSkipRefresh) {
       if (isRefreshing) {
         // If already refreshing, queue this request
         return new Promise((resolve, reject) => {
