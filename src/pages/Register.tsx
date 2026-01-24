@@ -9,6 +9,7 @@ import { authService } from "@/services";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { getErrorMessage } from "@/lib/utils";
 
 type Step = "register" | "otp" | "success";
 
@@ -65,7 +66,7 @@ export default function Register() {
       toast.success("Account created! Verification code sent to your email.");
       setCurrentStep("otp");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create account. Please try again.");
+      setError(getErrorMessage(err, "Failed to create account. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -86,7 +87,7 @@ export default function Register() {
       toast.success("Account activated! You can now login.");
       setCurrentStep("success");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to verify OTP. Please try again.");
+      setError(getErrorMessage(err, "Failed to verify OTP. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -103,7 +104,7 @@ export default function Register() {
       });
       toast.success("Verification code resent to your email!");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to resend verification code.");
+      setError(getErrorMessage(err, "Failed to resend verification code."));
     } finally {
       setLoading(false);
     }
