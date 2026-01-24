@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useAuth } from "./hooks/useAuth";
 import AdminSetup from "./components/AdminSetup";
 
 // Pages
@@ -55,58 +55,56 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Index />} />
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route path="forgot-password" element={<ForgotPassword />} />
-              <Route path="courses" element={<Courses />} />
-              <Route path="courses/:id" element={<CourseDetail />} />
-              <Route 
-                path="profile" 
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="change-password" 
-                element={
-                  <ProtectedRoute>
-                    <ChangePassword />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="admin" 
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                } 
-              />
-              <Route 
-                path="admin/courses" 
-                element={
-                  <AdminRoute>
-                    <CourseManagement />
-                  </AdminRoute>
-                } 
-              />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <AdminSetup />
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Index />} />
+            <Route path="login" element={<Login />} />
+            <Route path="register" element={<Register />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="courses" element={<Courses />} />
+            <Route path="courses/:id" element={<CourseDetail />} />
+            <Route 
+              path="profile" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="change-password" 
+              element={
+                <ProtectedRoute>
+                  <ChangePassword />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="admin" 
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } 
+            />
+            <Route 
+              path="admin/courses" 
+              element={
+                <AdminRoute>
+                  <CourseManagement />
+                </AdminRoute>
+              } 
+            />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <AdminSetup />
+      </BrowserRouter>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 

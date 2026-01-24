@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { authService } from '@/services';
 import { Loader2 } from 'lucide-react';
 import { getErrorMessage } from '@/lib/utils';
 
@@ -19,7 +18,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [error, setError] = useState('');
-  const { user, login } = useAuth();
+  const { user, login, sendOTP, verifyOTP } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in
@@ -59,7 +58,7 @@ const Login = () => {
         
         // Automatically send OTP
         try {
-          await authService.sendOTP({ email, purpose: 'signup' });
+          await sendOTP(email, 'signup');
           toast.success('Verification code sent to your email!');
         } catch (otpError) {
           console.error('Failed to send OTP:', otpError);
@@ -84,11 +83,7 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      await authService.verifyOTP({
-        email,
-        otp,
-        purpose: 'signup',
-      });
+      await verifyOTP(email, otp, 'signup');
       
       toast.success('Email verified successfully! Logging you in...');
       setNeedsVerification(false);
@@ -113,10 +108,7 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      await authService.sendOTP({
-        email,
-        purpose: 'signup',
-      });
+      await sendOTP(email, 'signup');
       toast.success('Verification code resent to your email!');
     } catch (err: any) {
       setError(getErrorMessage(err, 'Failed to resend verification code.'));

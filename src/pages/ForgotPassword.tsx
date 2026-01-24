@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { authService } from "@/services";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, CheckCircle2, Mail } from "lucide-react";
 import { getErrorMessage } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ type Step = "email" | "otp" | "password" | "success";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
+  const { sendOTP, verifyOTP, resetPassword } = useAuth();
   const [currentStep, setCurrentStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -27,10 +28,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await authService.sendOTP({ 
-        email,
-        purpose: "forgot-password" 
-      });
+      await sendOTP(email, "reset-password");
       setCurrentStep("otp");
     } catch (err: any) {
       setError(getErrorMessage(err, "Failed to send OTP. Please try again."));
@@ -45,11 +43,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await authService.verifyOTP({
-        email,
-        otp,
-        purpose: "forgot-password",
-      });
+      await verifyOTP(email, otp, "reset-password");
       
       // OTP verified successfully, proceed to password reset
       setCurrentStep("password");
@@ -77,10 +71,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await authService.resetPassword({
-        email,
-        newPassword,
-      });
+      await resetPassword(email, otp, newPassword);
       setCurrentStep("success");
     } catch (err: any) {
       setError(getErrorMessage(err, "Failed to reset password. Please try again."));
@@ -94,10 +85,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await authService.sendOTP({ 
-        email,
-        purpose: "forgot-password" 
-      });
+      await sendOTP(email, "reset-password");
       setError(""); // Clear any previous errors
     } catch (err: any) {
       setError(getErrorMessage(err, "Failed to resend OTP."));
