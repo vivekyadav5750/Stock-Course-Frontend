@@ -28,7 +28,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await sendOTP(email, "reset-password");
+      await sendOTP(email, "forgot-password");
       setCurrentStep("otp");
     } catch (err: any) {
       setError(getErrorMessage(err, "Failed to send OTP. Please try again."));
@@ -43,7 +43,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await verifyOTP(email, otp, "reset-password");
+      await verifyOTP(email, otp, "forgot-password");
       
       // OTP verified successfully, proceed to password reset
       setCurrentStep("password");
@@ -85,7 +85,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      await sendOTP(email, "reset-password");
+      await sendOTP(email, "forgot-password");
       setError(""); // Clear any previous errors
     } catch (err: any) {
       setError(getErrorMessage(err, "Failed to resend OTP."));

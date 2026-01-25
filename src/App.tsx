@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAppDispatch } from "@/redux/hooks";
-import { initializeAuth, logoutUser } from "@/redux/slice/user";
+import { getUser, logoutUser } from "@/redux/slice/user";
 import { useAuth } from "./hooks/useAuth";
 import AdminSetup from "./components/AdminSetup";
 
@@ -62,7 +62,7 @@ const AppContent = () => {
 
   // Initialize auth once when app loads
   useEffect(() => {
-    dispatch(initializeAuth());
+    dispatch(getUser());
   }, [dispatch]);
 
   // Listen for logout events from axios interceptor (only once)
