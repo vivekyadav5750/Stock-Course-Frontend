@@ -28,31 +28,31 @@ const queryClient = new QueryClient();
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
+  const { user, status } = useAuth();
+
+  if (status === 'loading' || status === 'idle') {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
-  
-  if (!user) {
+
+  if (!user && (status === 'success' || status === 'failed')) {
     return <Navigate to="/login" />;
   }
-  
+
   return <>{children}</>;
 };
 
 // Admin route component
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
+  const { user, status } = useAuth();
+
+  if (status === 'loading' || status === 'idle') {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
-  
-  if (!user || !user.isAdmin) {
+
+  if ((!user || !user.isAdmin) && (status === 'success' || status === 'failed')) {
     return <Navigate to="/" />;
   }
-  
+
   return <>{children}</>;
 };
 

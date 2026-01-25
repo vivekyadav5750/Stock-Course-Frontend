@@ -130,6 +130,7 @@ export const useAuth = () => {
 
     return {
         user,
+        status,
         isLoading: status === 'loading',
         isAuthenticated,
         login,
