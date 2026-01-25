@@ -1,15 +1,15 @@
 
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MOCK_COURSES, CourseLevel } from '@/lib/constants';
 import CourseCard from '@/components/CourseCard';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
   // Filter to show only one course from each level
   const featuredCourses = [
-    MOCK_COURSES.find(c => c.level === CourseLevel.BASIC),
+    MOCK_COURSES.find(c => c.level === CourseLevel.BEGINNER),
     MOCK_COURSES.find(c => c.level === CourseLevel.INTERMEDIATE),
     MOCK_COURSES.find(c => c.level === CourseLevel.ADVANCED),
   ].filter(Boolean);
@@ -26,8 +26,8 @@ const Index = () => {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: {
         type: "spring",
@@ -36,13 +36,15 @@ const Index = () => {
     }
   };
 
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen pt-16">
       {/* Hero Section */}
       <section className="py-20 md:py-28">
         <div className="container px-4 mx-auto">
           <div className="max-w-3xl mx-auto text-center">
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -50,7 +52,7 @@ const Index = () => {
             >
               Master the Stock Market with Confidence
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -58,7 +60,7 @@ const Index = () => {
             >
               Learn essential trading strategies from industry experts and transform your financial future.
             </motion.p>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
@@ -69,11 +71,13 @@ const Index = () => {
                   Explore Courses
                 </Button>
               </Link>
-              <Link to="/register">
-                <Button size="lg" variant="outline" className="px-8">
-                  Sign Up Free
-                </Button>
-              </Link>
+              {!user && (
+                <Link to="/register">
+                  <Button size="lg" variant="outline" className="px-8">
+                    Sign Up Free
+                  </Button>
+                </Link>
+              )}
             </motion.div>
           </div>
         </div>
@@ -88,8 +92,8 @@ const Index = () => {
               Comprehensive courses tailored for every skill level, from beginners to advanced traders.
             </p>
           </div>
-          
-          <motion.div 
+
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
@@ -104,7 +108,7 @@ const Index = () => {
               )
             ))}
           </motion.div>
-          
+
           <div className="text-center mt-12">
             <Link to="/courses">
               <Button variant="outline">View All Courses</Button>
@@ -122,16 +126,16 @@ const Index = () => {
               Learn from industry experts and gain practical knowledge that you can apply immediately.
             </p>
           </div>
-          
-          <motion.div 
+
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
           >
-            <motion.div 
-              variants={itemVariants} 
+            <motion.div
+              variants={itemVariants}
               className="p-6 rounded-lg border bg-card"
             >
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
@@ -142,9 +146,9 @@ const Index = () => {
                 Follow a proven curriculum designed to build your knowledge progressively from the fundamentals to advanced concepts.
               </p>
             </motion.div>
-            
-            <motion.div 
-              variants={itemVariants} 
+
+            <motion.div
+              variants={itemVariants}
               className="p-6 rounded-lg border bg-card"
             >
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
@@ -155,9 +159,9 @@ const Index = () => {
                 Learn from seasoned traders who share practical insights and real-world applications of trading strategies.
               </p>
             </motion.div>
-            
-            <motion.div 
-              variants={itemVariants} 
+
+            <motion.div
+              variants={itemVariants}
               className="p-6 rounded-lg border bg-card"
             >
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">

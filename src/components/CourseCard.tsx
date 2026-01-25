@@ -14,7 +14,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   // Choose badge color based on course level
   const getBadgeVariant = (level: CourseLevel) => {
     switch (level) {
-      case CourseLevel.BASIC:
+      case CourseLevel.BEGINNER:
         return 'secondary';
       case CourseLevel.INTERMEDIATE:
         return 'default';
@@ -30,7 +30,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       whileHover={{ y: -5 }}
       transition={{ type: "spring", stiffness: 300, damping: 15 }}
     >
-      <Link to={`/courses/${course.id}`} className="block h-full">
+      <Link to={`/course/${course.id}`} className="block h-full">
         <Card className="h-full overflow-hidden border group hover:shadow-md transition-all duration-300">
           <div className="aspect-video relative overflow-hidden">
             <img

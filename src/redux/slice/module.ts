@@ -53,7 +53,7 @@ export const getModulesByCourse = createAsyncThunk(
   "module/getByCourse",
   async (courseId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/courses/${courseId}/modules`);
+      const response = await axiosInstance.get(`/course/${courseId}/modules`);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to fetch modules");
@@ -148,7 +148,7 @@ export const reorderModules = createAsyncThunk(
   "module/reorder",
   async ({ courseId, moduleIds }: { courseId: string; moduleIds: string[] }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`/courses/${courseId}/modules/reorder`, { moduleIds });
+      const response = await axiosInstance.put(`/course/${courseId}/modules/reorder`, { moduleIds });
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to reorder modules");

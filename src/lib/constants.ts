@@ -2,7 +2,7 @@
 export const APP_NAME = "Master Invest";
 
 export enum CourseLevel {
-  BASIC = "Basic",
+  BEGINNER = "Beginner",
   INTERMEDIATE = "Intermediate",
   ADVANCED = "Advanced"
 }
@@ -31,7 +31,7 @@ export const MOCK_COURSES: Course[] = [
     id: "1",
     title: "Stock Market Fundamentals",
     description: "Learn the essential concepts of stock trading, market mechanics, and basic investment strategies for beginners.",
-    level: CourseLevel.BASIC,
+    level: CourseLevel.BEGINNER,
     imageUrl: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=800&auto=format&fit=crop",
     price: 499,
     topics: [

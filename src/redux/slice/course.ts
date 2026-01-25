@@ -12,7 +12,7 @@ export type Course = {
   discountPrice?: number;
   instructor?: string;
   category?: string;
-  level?: "beginner" | "intermediate" | "advanced";
+  level?: "Beginner" | "Intermediate" | "Advanced";
   language?: string;
   duration?: number;
   modules?: string[];
@@ -40,7 +40,7 @@ type CreateCourseData = {
   price: number;
   discountPrice?: number;
   category?: string;
-  level?: "beginner" | "intermediate" | "advanced";
+  level?: "Beginner" | "Intermediate" | "Advanced";
   language?: string;
 };
 
@@ -69,7 +69,7 @@ export const getAllCourses = createAsyncThunk(
   "course/getAll",
   async (params: { page?: number; limit?: number; search?: string; category?: string }, { rejectWithValue }) => {
     try {
-      const { page = 1, limit = 10, search, category } = params;
+      const { page = 0, limit = 10, search, category } = params;
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
@@ -77,7 +77,7 @@ export const getAllCourses = createAsyncThunk(
         ...(category && { category }),
       });
 
-      const response = await axiosInstance.get(`/courses?${queryParams}`);
+      const response = await axiosInstance.get(`/course?${queryParams}`);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to fetch courses");
@@ -100,7 +100,7 @@ export const getCourseById = createAsyncThunk(
   "course/getById",
   async (courseId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/courses/${courseId}`);
+      const response = await axiosInstance.get(`/course/${courseId}`);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to fetch course");
@@ -119,7 +119,7 @@ export const createCourse = createAsyncThunk(
   "course/create",
   async (data: CreateCourseData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/courses", data);
+      const response = await axiosInstance.post("/course", data);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to create course");
@@ -138,7 +138,7 @@ export const updateCourse = createAsyncThunk(
   "course/update",
   async ({ courseId, data }: { courseId: string; data: UpdateCourseData }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`/courses/${courseId}`, data);
+      const response = await axiosInstance.put(`/course/${courseId}`, data);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to update course");
@@ -157,7 +157,7 @@ export const deleteCourse = createAsyncThunk(
   "course/delete",
   async (courseId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(`/courses/${courseId}`);
+      const response = await axiosInstance.delete(`/course/${courseId}`);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to delete course");
@@ -176,7 +176,7 @@ export const enrollInCourse = createAsyncThunk(
   "course/enroll",
   async (courseId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(`/courses/${courseId}/enroll`);
+      const response = await axiosInstance.post(`/course/${courseId}/enroll`);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to enroll in course");
@@ -195,7 +195,7 @@ export const getEnrolledCourses = createAsyncThunk(
   "course/getEnrolled",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("/courses/enrolled");
+      const response = await axiosInstance.get("/course/enrolled");
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to fetch enrolled courses");
