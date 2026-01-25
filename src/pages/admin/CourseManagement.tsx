@@ -76,7 +76,7 @@ const CourseManagement = () => {
     title: '',
     description: '',
     category: '',
-    level: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
+    level: 'Beginner' as 'Beginner' | 'Intermediate' | 'Advanced',
     price: '',
     duration: 0,
     thumbnail: '',
@@ -317,7 +317,7 @@ const CourseManagement = () => {
       title: '',
       description: '',
       category: '',
-      level: 'beginner',
+      level: 'Beginner',
       price: '',
       duration: 0,
       thumbnail: '',
@@ -449,11 +449,11 @@ const CourseManagement = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="beginner">Beginner</SelectItem>
-                          <SelectItem value="intermediate">
+                          <SelectItem value="Beginner">Beginner</SelectItem>
+                          <SelectItem value="Intermediate">
                             Intermediate
                           </SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
+                          <SelectItem value="Advanced">Advanced</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -534,85 +534,84 @@ const CourseManagement = () => {
                   const courseId = course.id || course._id;
                   const selectedId = selectedCourse?.id || selectedCourse?._id;
                   return (
-                  <motion.div
-                    key={courseId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <Card
-                      className={`cursor-pointer transition-all ${
-                        selectedId === courseId
-                          ? 'ring-2 ring-primary'
-                          : ''
-                      }`}
-                      onClick={() => setSelectedCourse(course)}
+                    <motion.div
+                      key={courseId}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
                     >
-                      {course.thumbnail && (
-                        <img
-                          src={course.thumbnail}
-                          alt={course.title}
-                          className="w-full h-40 object-cover rounded-t-lg"
-                        />
-                      )}
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <CardTitle className="text-lg">
-                            {course.title}
-                          </CardTitle>
-                          <Badge
-                            variant={course.isPublished ? 'default' : 'secondary'}
+                      <Card
+                        className={`cursor-pointer transition-all ${selectedId === courseId
+                            ? 'ring-2 ring-primary'
+                            : ''
+                          }`}
+                        onClick={() => setSelectedCourse(course)}
+                      >
+                        {course.thumbnail && (
+                          <img
+                            src={course.thumbnail}
+                            alt={course.title}
+                            className="w-full h-40 object-cover rounded-t-lg"
+                          />
+                        )}
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <CardTitle className="text-lg">
+                              {course.title}
+                            </CardTitle>
+                            <Badge
+                              variant={course.isPublished ? 'default' : 'secondary'}
+                            >
+                              {course.isPublished ? 'Published' : 'Draft'}
+                            </Badge>
+                          </div>
+                          <CardDescription className="line-clamp-2">
+                            {course.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between text-sm">
+                            <Badge variant="outline">{course.level}</Badge>
+                            <span className="font-semibold">${course.price}</span>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditDialog(course);
+                            }}
                           >
-                            {course.isPublished ? 'Published' : 'Draft'}
-                          </Badge>
-                        </div>
-                        <CardDescription className="line-clamp-2">
-                          {course.description}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between text-sm">
-                          <Badge variant="outline">{course.level}</Badge>
-                          <span className="font-semibold">${course.price}</span>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditDialog(course);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (courseId) handleTogglePublish(courseId);
-                          }}
-                        >
-                          {course.isPublished ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (courseId) handleDeleteCourse(courseId);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  </motion.div>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (courseId) handleTogglePublish(courseId);
+                            }}
+                          >
+                            {course.isPublished ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (courseId) handleDeleteCourse(courseId);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -705,24 +704,24 @@ const CourseManagement = () => {
                       .map((module, index) => {
                         const moduleId = module.id || module._id;
                         return (
-                        <Card key={moduleId}>
-                          <CardHeader>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <CardTitle className="text-lg">
-                                  Module {module.order}: {module.title}
-                                </CardTitle>
+                          <Card key={moduleId}>
+                            <CardHeader>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <CardTitle className="text-lg">
+                                    Module {module.order}: {module.title}
+                                  </CardTitle>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => moduleId && handleDeleteModule(moduleId)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => moduleId && handleDeleteModule(moduleId)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </CardHeader>
-                        </Card>
+                            </CardHeader>
+                          </Card>
                         );
                       })}
                   </div>
@@ -768,9 +767,9 @@ const CourseManagement = () => {
                                 {modules.map((module) => {
                                   const moduleId = module.id || module._id;
                                   return (
-                                  <SelectItem key={moduleId} value={moduleId || ''}>
-                                    {module.title}
-                                  </SelectItem>
+                                    <SelectItem key={moduleId} value={moduleId || ''}>
+                                      {module.title}
+                                    </SelectItem>
                                   );
                                 })}
                               </SelectContent>
@@ -895,33 +894,33 @@ const CourseManagement = () => {
                       .map((lesson) => {
                         const lessonId = lesson.id || lesson._id;
                         return (
-                        <Card key={lessonId}>
-                          <CardHeader>
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                  <Video className="h-4 w-4" />
-                                  {lesson.title}
-                                </CardTitle>
-                                <CardDescription>
-                                  {lesson.duration && `Duration: ${lesson.duration} min`}
-                                  {lesson.isFree && (
-                                    <Badge variant="outline" className="ml-2">
-                                      Free
-                                    </Badge>
-                                  )}
-                                </CardDescription>
+                          <Card key={lessonId}>
+                            <CardHeader>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <CardTitle className="text-lg flex items-center gap-2">
+                                    <Video className="h-4 w-4" />
+                                    {lesson.title}
+                                  </CardTitle>
+                                  <CardDescription>
+                                    {lesson.duration && `Duration: ${lesson.duration} min`}
+                                    {lesson.isFree && (
+                                      <Badge variant="outline" className="ml-2">
+                                        Free
+                                      </Badge>
+                                    )}
+                                  </CardDescription>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => lessonId && handleDeleteLesson(lessonId)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => lessonId && handleDeleteLesson(lessonId)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </CardHeader>
-                        </Card>
+                            </CardHeader>
+                          </Card>
                         );
                       })}
                   </div>
@@ -985,9 +984,9 @@ const CourseManagement = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
+                        <SelectItem value="Beginner">Beginner</SelectItem>
+                        <SelectItem value="Intermediate">Intermediate</SelectItem>
+                        <SelectItem value="Advanced">Advanced</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

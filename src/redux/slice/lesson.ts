@@ -179,7 +179,7 @@ export const getLessonProgress = createAsyncThunk(
   "lesson/getProgress",
   async (courseId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/courses/${courseId}/progress`);
+      const response = await axiosInstance.get(`/course/${courseId}/progress`);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to fetch progress");
