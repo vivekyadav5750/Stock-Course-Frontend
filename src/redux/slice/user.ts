@@ -18,6 +18,10 @@ export type User = {
     transactions?: string[];
     createdAt?: string;
     updatedAt?: string;
+    notifications?: {
+        email: boolean;
+        sms: boolean;
+    }
 };
 
 type UserState = {

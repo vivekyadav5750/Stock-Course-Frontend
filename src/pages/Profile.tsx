@@ -1,35 +1,64 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Switch } from '@/components/ui/switch';
 import { motion } from 'framer-motion';
 
+
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [mobile, setMobile] = useState(user?.mobile || '');
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('profileActiveTab') || '0';
+  });
+  const [notifications, setNotifications] = useState({ email: user?.notifications?.email ?? true, sms: user?.notifications?.sms ?? false });
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  useEffect(() => {
+    localStorage.setItem('profileActiveTab', activeTab);
+  }, [activeTab]);
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setFirstName(user?.firstName || '');
+    setLastName(user?.lastName || '');
+    setEmail(user?.email || '');
+    setMobile(user?.mobile || '');
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    
-    // TODO: Implement profile update API call
-    setTimeout(() => {
+
+    try {
+      await updateProfile({
+        firstName,
+        lastName,
+        mobile,
+      });
+      setIsEditing(false);
+    } catch (error: any) {
+      // Error already handled in useAuth
+    } finally {
       setIsSaving(false);
-      toast.success('Profile updated successfully');
-    }, 1000);
+    }
   };
 
   const getInitials = () => {
@@ -42,11 +71,40 @@ const Profile = () => {
     return `${user.firstName} ${user.lastName}`;
   };
 
+  const handleNotificationChange = async (type: 'email' | 'sms', value: boolean) => {
+    setIsSavingNotifications(true);
+
+    try {
+      if (type === 'email') {
+        setNotifications((prev) => ({ ...prev, email: value }));
+      } else {
+        setNotifications((prev) => ({ ...prev, sms: value }));
+      }
+
+      await updateProfile({
+        notifications: {
+          email: type === 'email' ? value : notifications.email,
+          sms: type === 'sms' ? value : notifications.sms,
+        },
+      });
+    } catch (error: any) {
+      // Revert on error
+      if (type === 'email') {
+        setNotifications((prev) => ({ ...prev, email: !value }));
+      } else {
+        setNotifications((prev) => ({ ...prev, sms: !value }));
+      }
+      // Error already handled in useAuth
+    } finally {
+      setIsSavingNotifications(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="container px-4 mx-auto">
         <div className="max-w-4xl mx-auto">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -54,15 +112,15 @@ const Profile = () => {
           >
             My Profile
           </motion.h1>
-          
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-8">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="courses">My Courses</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="0">Profile</TabsTrigger>
+              <TabsTrigger value="1">My Courses</TabsTrigger>
+              <TabsTrigger value="2">Settings</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="profile">
+
+            <TabsContent value="0">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -75,10 +133,15 @@ const Profile = () => {
                         <AvatarImage src={user?.avatar} alt={getFullName()} />
                         <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
                       </Avatar>
-                      <div>
+                      <div className="flex-1">
                         <CardTitle>{getFullName()}</CardTitle>
                         <CardDescription>{user?.email}</CardDescription>
                       </div>
+                      {!isEditing && (
+                        <Button variant="outline" onClick={handleEditClick}>
+                          Edit Profile
+                        </Button>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -90,6 +153,7 @@ const Profile = () => {
                             id="firstName"
                             value={firstName}
                             onChange={(e) => setFirstName(e.target.value)}
+                            disabled={!isEditing}
                           />
                         </div>
                         <div className="space-y-2">
@@ -98,10 +162,11 @@ const Profile = () => {
                             id="lastName"
                             value={lastName}
                             onChange={(e) => setLastName(e.target.value)}
+                            disabled={!isEditing}
                           />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input
@@ -112,7 +177,7 @@ const Profile = () => {
                           disabled
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="mobile">Mobile Number</Label>
                         <div className="flex items-center gap-2">
@@ -122,6 +187,7 @@ const Profile = () => {
                             value={mobile}
                             onChange={(e) => setMobile(e.target.value)}
                             placeholder="+91 1234567890"
+                            disabled={!isEditing}
                           />
                         </div>
                         {user?.isVerified ? (
@@ -130,21 +196,34 @@ const Profile = () => {
                           <p className="text-xs text-muted-foreground">Phone verification required for secure access</p>
                         )}
                       </div>
-                      
-                      <Button 
-                        type="submit" 
-                        className="w-full"
-                        disabled={isSaving}
-                      >
-                        {isSaving ? "Saving..." : "Save Changes"}
-                      </Button>
+
+                      {isEditing && (
+                        <div className="flex gap-3">
+                          <Button
+                            type="submit"
+                            className="flex-1"
+                            disabled={isSaving}
+                          >
+                            {isSaving ? "Saving..." : "Save Changes"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={handleCancelEdit}
+                            disabled={isSaving}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
                     </form>
                   </CardContent>
                 </Card>
               </motion.div>
             </TabsContent>
-            
-            <TabsContent value="courses">
+
+            <TabsContent value="1">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -168,8 +247,8 @@ const Profile = () => {
                 </Card>
               </motion.div>
             </TabsContent>
-            
-            <TabsContent value="settings">
+
+            <TabsContent value="2">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -188,42 +267,48 @@ const Profile = () => {
                       <p className="text-sm text-muted-foreground mb-4">
                         Change your password with OTP verification
                       </p>
-                      <Button 
+                      <Button
                         variant="outline"
                         onClick={() => navigate('/change-password')}
                       >
                         Change Password
                       </Button>
                     </div>
-                    
+
                     <div>
                       <h3 className="text-lg font-medium mb-2">Notifications</h3>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between py-2">
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium">Email Notifications</p>
                             <p className="text-sm text-muted-foreground">
                               Receive emails about course updates
                             </p>
                           </div>
-                          <div>
-                            <input type="checkbox" id="emailNotifications" className="toggle" defaultChecked />
-                          </div>
+                          <Switch
+                            id="emailNotifications"
+                            checked={notifications.email}
+                            onCheckedChange={(value) => handleNotificationChange('email', value)}
+                            disabled={isSavingNotifications}
+                          />
                         </div>
                         <div className="flex items-center justify-between py-2">
-                          <div>
+                          <div className="flex-1">
                             <p className="font-medium">SMS Notifications</p>
                             <p className="text-sm text-muted-foreground">
                               Receive text messages about course updates
                             </p>
                           </div>
-                          <div>
-                            <input type="checkbox" id="smsNotifications" className="toggle" />
-                          </div>
+                          <Switch
+                            id="smsNotifications"
+                            checked={notifications.sms}
+                            onCheckedChange={(value) => handleNotificationChange('sms', value)}
+                            disabled={isSavingNotifications}
+                          />
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
                       <h3 className="text-lg font-medium mb-2">Account</h3>
                       <Button variant="destructive" onClick={logout}>

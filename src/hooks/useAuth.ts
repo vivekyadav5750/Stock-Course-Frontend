@@ -3,12 +3,14 @@ import {
     userLogin,
     userRegister,
     logoutUser,
-    //   refreshUser,
+    getUser,
     sendOTP,
     verifyOTP,
     forgotPassword,
     resetPassword,
-    changePassword
+    changePassword,
+    updateUserProfile as updateUserProfileAction,
+    User,
 } from '@/redux/slice/user';
 import { toast } from 'sonner';
 
@@ -105,6 +107,27 @@ export const useAuth = () => {
         }
     };
 
+    const updateUserProfile = async (data: Partial<User>) => {
+        try {
+            const result = await dispatch(updateUserProfileAction(data)).unwrap();
+            await dispatch(getUser()).unwrap(); // Refresh user data
+            toast.success('Profile updated successfully');
+            return result;
+        } catch (error: any) {
+            toast.error(error || 'Profile update failed');
+            throw error;
+        }
+    };
+
+    const fetchUser = async () => {
+        try {
+            const result = await dispatch(getUser()).unwrap();
+            return result;
+        } catch (error: any) {
+            throw error;
+        }
+    };
+
     return {
         user,
         isLoading: status === 'loading',
@@ -112,11 +135,12 @@ export const useAuth = () => {
         login,
         register,
         logout,
-        // refreshUser: refresh,
+        getUser: fetchUser,
         sendOTP: sendOTPCode,
         verifyOTP: verifyOTPCode,
         forgotPassword: requestPasswordReset,
         resetPassword: resetUserPassword,
         changePassword: changeUserPassword,
+        updateProfile: updateUserProfile,
     };
 };
