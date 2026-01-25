@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
 import { useAppDispatch } from "@/redux/hooks";
-import { initializeAuth, logoutUser } from "@/redux/slice/user";
+import { getUser, logoutUser } from "@/redux/slice/user";
 import { useAuth } from "./hooks/useAuth";
 import AdminSetup from "./components/AdminSetup";
 
@@ -28,31 +28,31 @@ const queryClient = new QueryClient();
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
+  const { user, status } = useAuth();
+
+  if (status === 'loading' || status === 'idle') {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
-  
-  if (!user) {
+
+  if (!user && (status === 'success' || status === 'failed')) {
     return <Navigate to="/login" />;
   }
-  
+
   return <>{children}</>;
 };
 
 // Admin route component
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
+  const { user, status } = useAuth();
+
+  if (status === 'loading' || status === 'idle') {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
-  
-  if (!user || !user.isAdmin) {
+
+  if ((!user || !user.isAdmin) && (status === 'success' || status === 'failed')) {
     return <Navigate to="/" />;
   }
-  
+
   return <>{children}</>;
 };
 
@@ -62,7 +62,7 @@ const AppContent = () => {
 
   // Initialize auth once when app loads
   useEffect(() => {
-    dispatch(initializeAuth());
+    dispatch(getUser());
   }, [dispatch]);
 
   // Listen for logout events from axios interceptor (only once)
