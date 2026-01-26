@@ -61,10 +61,6 @@ const CourseManagement = () => {
   const { modules, status: moduleStatus } = useAppSelector((state) => state.module);
   const { lessons, status: lessonStatus } = useAppSelector((state) => state.lesson);
 
-  console.log("courses : ", courses);
-  console.log("modules : ", modules);
-  console.log("lessons : ", lessons);
-
   // Local state
   const [selectedCourse, setSelectedCourse] = useState<Course_Types | null>(null);
   const [isLoading, setIsLoading] = useState(true);
