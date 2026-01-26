@@ -155,8 +155,7 @@ export const togglePublishModule = createAsyncThunk(
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to toggle publish status");
       }
-
-      return response.data.data;
+      return response.data.data?.module;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to toggle publish status");
       return rejectWithValue(message);
@@ -247,11 +246,11 @@ const moduleSlice = createSlice({
       })
       .addCase(updateModule.fulfilled, (state, action) => {
         state.status = "success";
-        const index = state.modules.findIndex(m => m.id === action.payload.id || m._id === action.payload._id);
+        const index = state.modules.findIndex(m => m._id === action.payload._id);
         if (index !== -1) {
           state.modules[index] = action.payload;
         }
-        if (state.currentModule?.id === action.payload.id) {
+        if (state.currentModule?._id === action.payload._id) {
           state.currentModule = action.payload;
         }
         state.message = "Module updated successfully";
@@ -268,7 +267,10 @@ const moduleSlice = createSlice({
       })
       .addCase(deleteModule.fulfilled, (state, action) => {
         state.status = "success";
-        state.modules = state.modules.filter(m => m.id !== action.payload && m._id !== action.payload);
+        state.modules = state.modules.filter(m => m._id !== action.payload);
+        if (state.currentModule?._id === action.payload) {
+          state.currentModule = null;
+        }
         state.message = "Module deleted successfully";
       })
       .addCase(deleteModule.rejected, (state, action) => {
@@ -283,11 +285,11 @@ const moduleSlice = createSlice({
       })
       .addCase(togglePublishModule.fulfilled, (state, action) => {
         state.status = "success";
-        const index = state.modules.findIndex(m => m.id === action.payload.id || m._id === action.payload._id);
+        const index = state.modules.findIndex(m => m._id === action.payload._id);
         if (index !== -1) {
           state.modules[index] = action.payload;
         }
-        if (state.currentModule?.id === action.payload.id) {
+        if (state.currentModule?._id === action.payload._id) {
           state.currentModule = action.payload;
         }
         state.message = "Module publish status toggled successfully";

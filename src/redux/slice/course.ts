@@ -193,8 +193,7 @@ export const togglePublishCourse = createAsyncThunk(
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to toggle publish status");
       }
-
-      return response.data.data;
+      return response.data.data?.course;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to toggle publish status");
       return rejectWithValue(message);
@@ -322,11 +321,11 @@ const courseSlice = createSlice({
       })
       .addCase(updateCourse.fulfilled, (state, action) => {
         state.status = "success";
-        const index = state.courses.findIndex(c => c.id === action.payload.id || c._id === action.payload._id);
+        const index = state.courses.findIndex(c => c._id === action.payload._id);
         if (index !== -1) {
           state.courses[index] = action.payload;
         }
-        if (state.currentCourse?.id === action.payload.id) {
+        if (state.currentCourse?._id === action.payload._id) {
           state.currentCourse = action.payload;
         }
         state.message = "Course updated successfully";
@@ -343,7 +342,7 @@ const courseSlice = createSlice({
       })
       .addCase(deleteCourse.fulfilled, (state, action) => {
         state.status = "success";
-        state.courses = state.courses.filter(c => c.id !== action.payload && c._id !== action.payload);
+        state.courses = state.courses.filter(c => c._id !== action.payload);
         state.message = "Course deleted successfully";
       })
       .addCase(deleteCourse.rejected, (state, action) => {
@@ -358,11 +357,12 @@ const courseSlice = createSlice({
       })
       .addCase(togglePublishCourse.fulfilled, (state, action) => {
         state.status = "success";
-        const index = state.courses.findIndex(c => c.id === action.payload.id || c._id === action.payload._id);
+        const index = state.courses.findIndex(c => c._id === action.payload._id );
+        console.log("index found:", index);
         if (index !== -1) {
           state.courses[index] = action.payload;
         }
-        if (state.currentCourse?.id === action.payload.id) {
+        if (state.currentCourse?._id === action.payload._id) {
           state.currentCourse = action.payload;
         }
         state.message = "Course publish status toggled successfully";

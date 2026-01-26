@@ -185,7 +185,7 @@ export const togglePublishLesson = createAsyncThunk(
         return rejectWithValue(response.data.message || "Failed to toggle publish status");
       }
 
-      return response.data.data;
+      return response.data.data?.lesson;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to toggle publish status");
       return rejectWithValue(message);
@@ -314,11 +314,11 @@ const lessonSlice = createSlice({
       })
       .addCase(updateLesson.fulfilled, (state, action) => {
         state.status = "success";
-        const index = state.lessons.findIndex(l => l.id === action.payload.id || l._id === action.payload._id);
+        const index = state.lessons.findIndex(l => l._id === action.payload._id);
         if (index !== -1) {
           state.lessons[index] = action.payload;
         }
-        if (state.currentLesson?.id === action.payload.id) {
+        if (state.currentLesson?._id === action.payload._id) {
           state.currentLesson = action.payload;
         }
         state.message = "Lesson updated successfully";
@@ -335,7 +335,10 @@ const lessonSlice = createSlice({
       })
       .addCase(deleteLesson.fulfilled, (state, action) => {
         state.status = "success";
-        state.lessons = state.lessons.filter(l => l.id !== action.payload && l._id !== action.payload);
+        state.lessons = state.lessons.filter(l => l._id !== action.payload);
+        if (state.currentLesson?._id === action.payload) {
+          state.currentLesson = null;
+        }
         state.message = "Lesson deleted successfully";
       })
       .addCase(deleteLesson.rejected, (state, action) => {
@@ -350,11 +353,11 @@ const lessonSlice = createSlice({
       })
       .addCase(togglePublishLesson.fulfilled, (state, action) => {
         state.status = "success";
-        const index = state.lessons.findIndex(l => l.id === action.payload.id || l._id === action.payload._id);
+        const index = state.lessons.findIndex(l => l._id === action.payload._id);
         if (index !== -1) {
           state.lessons[index] = action.payload;
         }
-        if (state.currentLesson?.id === action.payload.id) {
+        if (state.currentLesson?._id === action.payload._id) {
           state.currentLesson = action.payload;
         }
         state.message = "Lesson publish status toggled successfully";
