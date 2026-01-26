@@ -21,7 +21,8 @@ export type User = {
     notifications?: {
         email: boolean;
         sms: boolean;
-    }
+    },
+    category?: string[];
 };
 
 type UserState = {
@@ -29,6 +30,7 @@ type UserState = {
     status: "idle" | "loading" | "success" | "failed";
     message: string;
     isAuthenticated: boolean;
+    // categories?: string[];
 };
 
 type LoginData = {
@@ -49,7 +51,8 @@ const initialState: UserState = {
     status: "idle",
     message: "",
     isAuthenticated: false,
-};
+    // categories: [],
+};  
 
 export const userLogin = createAsyncThunk(
     "user/login",
