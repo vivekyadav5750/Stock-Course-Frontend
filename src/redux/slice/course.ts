@@ -1,32 +1,12 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "@/lib/axios";
 import { getErrorMessage } from "@/lib/utils";
+import { Course_Types } from "@/types";
 
-export type Course = {
-  _id?: string;
-  id?: string;
-  title: string;
-  description: string;
-  thumbnail?: string;
-  price: number;
-  discountPrice?: number;
-  instructor?: string;
-  category?: string;
-  level?: "Beginner" | "Intermediate" | "Advanced";
-  language?: string;
-  duration?: number;
-  modules?: string[];
-  students?: string[];
-  rating?: number;
-  reviews?: number;
-  isPublished?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-};
 
 type CourseState = {
-  courses: Course[];
-  currentCourse: Course | null;
+  courses: Course_Types[];
+  currentCourse: Course_Types | null;
   status: "idle" | "loading" | "success" | "failed";
   message: string;
   totalPages: number;
@@ -56,17 +36,49 @@ const initialState: CourseState = {
 };
 
 // Helper to normalize course data
-const normalizeCourse = (course: any): Course => {
-  if (!course) return course;
-  return {
-    ...course,
-    id: course._id || course.id,
-  };
-};
+// const normalizeCourse = (course: any): Course_Types => {
+//   if (!course) return course;
+//   return {
+//     ...course,
+//     id: course._id || course.id,
+//   };
+// };
 
+// admin
 // Get all courses with pagination and filters
 export const getAllCourses = createAsyncThunk(
   "course/getAll",
+  async (params: { page?: number; limit?: number; search?: string; category?: string }, { rejectWithValue }) => {
+    try {
+      const { page = 0, limit = 10, search, category } = params;
+      const queryParams = new URLSearchParams({
+        // page: page.toString(),
+        // limit: limit.toString(),
+        // ...(search && { search }),
+        ...(category && { category }),
+      });
+
+      const response = await axiosInstance.get(`/course/all?${queryParams.toString()}`);
+
+      if (!response.data.success) {
+        return rejectWithValue(response.data.message || "Failed to fetch courses");
+      }
+
+      return {
+        courses: response.data.data,
+        totalPages: response.data.data.totalPages || 1,
+        currentPage: response.data.data.currentPage || 1,
+      };
+    } catch (error: any) {
+      const message = getErrorMessage(error, "Failed to fetch courses");
+      return rejectWithValue(message);
+    }
+  }
+);
+
+// only published courses for user/students /public use 
+export const getCourse = createAsyncThunk(
+  "course/get",
   async (params: { page?: number; limit?: number; search?: string; category?: string }, { rejectWithValue }) => {
     try {
       const { page = 0, limit = 10, search, category } = params;
@@ -77,14 +89,14 @@ export const getAllCourses = createAsyncThunk(
         ...(category && { category }),
       });
 
-      const response = await axiosInstance.get(`/course?${queryParams}`);
+      const response = await axiosInstance.get(`/course?${queryParams.toString()}`);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to fetch courses");
       }
 
       return {
-        courses: response.data.data.courses.map(normalizeCourse),
+        courses: response.data.data,
         totalPages: response.data.data.totalPages || 1,
         currentPage: response.data.data.currentPage || 1,
       };
@@ -96,23 +108,23 @@ export const getAllCourses = createAsyncThunk(
 );
 
 // Get single course by ID
-export const getCourseById = createAsyncThunk(
-  "course/getById",
-  async (courseId: string, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get(`/course/${courseId}`);
+// export const getCourseById = createAsyncThunk(
+//   "course/getById",
+//   async (courseId: string, { rejectWithValue }) => {
+//     try {
+//       const response = await axiosInstance.get(`/course/${courseId}`);
 
-      if (!response.data.success) {
-        return rejectWithValue(response.data.message || "Failed to fetch course");
-      }
+//       if (!response.data.success) {
+//         return rejectWithValue(response.data.message || "Failed to fetch course");
+//       }
 
-      return normalizeCourse(response.data.data);
-    } catch (error: any) {
-      const message = getErrorMessage(error, "Failed to fetch course");
-      return rejectWithValue(message);
-    }
-  }
-);
+//       return response.data.data;
+//     } catch (error: any) {
+//       const message = getErrorMessage(error, "Failed to fetch course");
+//       return rejectWithValue(message);
+//     }
+//   }
+// );
 
 // Create new course (admin)
 export const createCourse = createAsyncThunk(
@@ -125,7 +137,7 @@ export const createCourse = createAsyncThunk(
         return rejectWithValue(response.data.message || "Failed to create course");
       }
 
-      return normalizeCourse(response.data.data);
+      return response.data.data;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to create course");
       return rejectWithValue(message);
@@ -144,7 +156,7 @@ export const updateCourse = createAsyncThunk(
         return rejectWithValue(response.data.message || "Failed to update course");
       }
 
-      return normalizeCourse(response.data.data);
+      return response.data.data;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to update course");
       return rejectWithValue(message);
@@ -171,43 +183,62 @@ export const deleteCourse = createAsyncThunk(
   }
 );
 
-// Enroll in course
-export const enrollInCourse = createAsyncThunk(
-  "course/enroll",
+// router.patch("/:id/publish", protect, allowRoles("admin", "superadmin"), togglePublishController);
+export const togglePublishCourse = createAsyncThunk(
+  "course/togglePublish",
   async (courseId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(`/course/${courseId}/enroll`);
+      const response = await axiosInstance.patch(`/course/${courseId}/publish`);
 
       if (!response.data.success) {
-        return rejectWithValue(response.data.message || "Failed to enroll in course");
+        return rejectWithValue(response.data.message || "Failed to toggle publish status");
       }
 
-      return normalizeCourse(response.data.data);
+      return response.data.data;
     } catch (error: any) {
-      const message = getErrorMessage(error, "Failed to enroll in course");
+      const message = getErrorMessage(error, "Failed to toggle publish status");
       return rejectWithValue(message);
     }
   }
 );
+
+// Enroll in course
+// export const enrollInCourse = createAsyncThunk(
+//   "course/enroll",
+//   async (courseId: string, { rejectWithValue }) => {
+//     try {
+//       const response = await axiosInstance.post(`/course/${courseId}/enroll`);
+
+//       if (!response.data.success) {
+//         return rejectWithValue(response.data.message || "Failed to enroll in course");
+//       }
+
+//       return response.data.data;
+//     } catch (error: any) {
+//       const message = getErrorMessage(error, "Failed to enroll in course");
+//       return rejectWithValue(message);
+//     }
+//   }
+// );
 
 // Get enrolled courses
-export const getEnrolledCourses = createAsyncThunk(
-  "course/getEnrolled",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get("/course/enrolled");
+// export const getEnrolledCourses = createAsyncThunk(
+//   "course/getEnrolled",
+//   async (_, { rejectWithValue }) => {
+//     try {
+//       const response = await axiosInstance.get("/course/enrolled");
 
-      if (!response.data.success) {
-        return rejectWithValue(response.data.message || "Failed to fetch enrolled courses");
-      }
+//       if (!response.data.success) {
+//         return rejectWithValue(response.data.message || "Failed to fetch enrolled courses");
+//       }
 
-      return response.data.data.map(normalizeCourse);
-    } catch (error: any) {
-      const message = getErrorMessage(error, "Failed to fetch enrolled courses");
-      return rejectWithValue(message);
-    }
-  }
-);
+//       return response.data.data;
+//     } catch (error: any) {
+//       const message = getErrorMessage(error, "Failed to fetch enrolled courses");
+//       return rejectWithValue(message);
+//     }
+//   }
+// );
 
 const courseSlice = createSlice({
   name: "course",
@@ -238,21 +269,37 @@ const courseSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
-      // Get Course By ID
-      .addCase(getCourseById.pending, (state) => {
+
+      // get published course
+      .addCase(getCourse.pending, (state) => {
         state.status = "loading";
         state.message = "";
       })
-      .addCase(getCourseById.fulfilled, (state, action) => {
+      .addCase(getCourse.fulfilled, (state, action) => {
         state.status = "success";
-        state.currentCourse = action.payload;
+        state.courses = action.payload.courses;
+        state.totalPages = action.payload.totalPages;
+        state.currentPage = action.payload.currentPage;
       })
-      .addCase(getCourseById.rejected, (state, action) => {
+      .addCase(getCourse.rejected, (state, action) => {
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
+      // Get Course By ID
+      // .addCase(getCourseById.pending, (state) => {
+      //   state.status = "loading";
+      //   state.message = "";
+      // })
+      // .addCase(getCourseById.fulfilled, (state, action) => {
+      //   state.status = "success";
+      //   state.currentCourse = action.payload;
+      // })
+      // .addCase(getCourseById.rejected, (state, action) => {
+      //   state.status = "failed";
+      //   state.message = action.payload as string;
+      // })
+
       // Create Course
       .addCase(createCourse.pending, (state) => {
         state.status = "loading";
@@ -267,7 +314,7 @@ const courseSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Update Course
       .addCase(updateCourse.pending, (state) => {
         state.status = "loading";
@@ -288,7 +335,7 @@ const courseSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Delete Course
       .addCase(deleteCourse.pending, (state) => {
         state.status = "loading";
@@ -303,34 +350,55 @@ const courseSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
-      // Enroll in Course
-      .addCase(enrollInCourse.pending, (state) => {
+
+      // Toggle Publish Course
+      .addCase(togglePublishCourse.pending, (state) => {
         state.status = "loading";
         state.message = "";
       })
-      .addCase(enrollInCourse.fulfilled, (state, action) => {
+      .addCase(togglePublishCourse.fulfilled, (state, action) => {
         state.status = "success";
-        state.message = "Successfully enrolled in course";
+        const index = state.courses.findIndex(c => c.id === action.payload.id || c._id === action.payload._id);
+        if (index !== -1) {
+          state.courses[index] = action.payload;
+        }
+        if (state.currentCourse?.id === action.payload.id) {
+          state.currentCourse = action.payload;
+        }
+        state.message = "Course publish status toggled successfully";
       })
-      .addCase(enrollInCourse.rejected, (state, action) => {
-        state.status = "failed";
-        state.message = action.payload as string;
-      })
-      
-      // Get Enrolled Courses
-      .addCase(getEnrolledCourses.pending, (state) => {
-        state.status = "loading";
-        state.message = "";
-      })
-      .addCase(getEnrolledCourses.fulfilled, (state, action) => {
-        state.status = "success";
-        state.courses = action.payload;
-      })
-      .addCase(getEnrolledCourses.rejected, (state, action) => {
+      .addCase(togglePublishCourse.rejected, (state, action) => {
         state.status = "failed";
         state.message = action.payload as string;
       });
+
+    // Enroll in Course
+    // .addCase(enrollInCourse.pending, (state) => {
+    //   state.status = "loading";
+    //   state.message = "";
+    // })
+    // .addCase(enrollInCourse.fulfilled, (state, action) => {
+    //   state.status = "success";
+    //   state.message = "Successfully enrolled in course";
+    // })
+    // .addCase(enrollInCourse.rejected, (state, action) => {
+    //   state.status = "failed";
+    //   state.message = action.payload as string;
+    // })
+
+    // // Get Enrolled Courses
+    // .addCase(getEnrolledCourses.pending, (state) => {
+    //   state.status = "loading";
+    //   state.message = "";
+    // })
+    // .addCase(getEnrolledCourses.fulfilled, (state, action) => {
+    //   state.status = "success";
+    //   state.courses = action.payload;
+    // })
+    // .addCase(getEnrolledCourses.rejected, (state, action) => {
+    //   state.status = "failed";
+    //   state.message = action.payload as string;
+    // });
   },
 });
 

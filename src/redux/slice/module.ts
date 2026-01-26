@@ -14,6 +14,7 @@ export type Module = {
   isPublished?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  category?: string;
 };
 
 type ModuleState = {
@@ -23,14 +24,15 @@ type ModuleState = {
   message: string;
 };
 
-type CreateModuleData = {
+export type CreateModuleData = {
   title: string;
   description?: string;
   courseId: string;
+  category?: string;
   order: number;
 };
 
-type UpdateModuleData = Partial<Omit<CreateModuleData, 'courseId'>>;
+export type UpdateModuleData = Partial<Omit<CreateModuleData, 'courseId'>>;
 
 const initialState: ModuleState = {
   modules: [],
@@ -39,27 +41,27 @@ const initialState: ModuleState = {
   message: "",
 };
 
-// Helper to normalize module data
-const normalizeModule = (module: any): Module => {
-  if (!module) return module;
-  return {
-    ...module,
-    id: module._id || module.id,
-  };
-};
-
+// admin
 // Get all modules for a course
-export const getModulesByCourse = createAsyncThunk(
-  "module/getByCourse",
-  async (courseId: string, { rejectWithValue }) => {
+export const getAllModules = createAsyncThunk(
+  "module/getAllModules",
+  async (params: { page?: number, limit?: number, search?: string, category?: string, courseId?: string }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/course/${courseId}/modules`);
+      const { page = 0, limit = 10, search, category, courseId } = params;
+      const queryParams = new URLSearchParams({
+        // page: page.toString(),
+        // limit: limit.toString(),
+        // ...(search && { search }),
+        ...(category && { category }),
+        ...(courseId && { courseId }),
+      });
+      const response = await axiosInstance.get(`/module/all?${queryParams.toString()}`);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to fetch modules");
       }
 
-      return response.data.data.map(normalizeModule);
+      return response.data.data;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to fetch modules");
       return rejectWithValue(message);
@@ -68,36 +70,36 @@ export const getModulesByCourse = createAsyncThunk(
 );
 
 // Get single module by ID
-export const getModuleById = createAsyncThunk(
-  "module/getById",
-  async (moduleId: string, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get(`/modules/${moduleId}`);
+// export const getModuleById = createAsyncThunk(
+//   "module/getById",
+//   async (moduleId: string, { rejectWithValue }) => {
+//     try {
+//       const response = await axiosInstance.get(`/modules/${moduleId}`);
 
-      if (!response.data.success) {
-        return rejectWithValue(response.data.message || "Failed to fetch module");
-      }
+//       if (!response.data.success) {
+//         return rejectWithValue(response.data.message || "Failed to fetch module");
+//       }
 
-      return normalizeModule(response.data.data);
-    } catch (error: any) {
-      const message = getErrorMessage(error, "Failed to fetch module");
-      return rejectWithValue(message);
-    }
-  }
-);
+//       return response.data.data;
+//     } catch (error: any) {
+//       const message = getErrorMessage(error, "Failed to fetch module");
+//       return rejectWithValue(message);
+//     }
+//   }
+// );
 
 // Create new module (admin)
 export const createModule = createAsyncThunk(
   "module/create",
   async (data: CreateModuleData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/modules", data);
+      const response = await axiosInstance.post("/module", data);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to create module");
       }
 
-      return normalizeModule(response.data.data);
+      return response.data.data;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to create module");
       return rejectWithValue(message);
@@ -110,13 +112,13 @@ export const updateModule = createAsyncThunk(
   "module/update",
   async ({ moduleId, data }: { moduleId: string; data: UpdateModuleData }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`/modules/${moduleId}`, data);
+      const response = await axiosInstance.put(`/module/${moduleId}`, data);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to update module");
       }
 
-      return normalizeModule(response.data.data);
+      return response.data.data;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to update module");
       return rejectWithValue(message);
@@ -129,7 +131,7 @@ export const deleteModule = createAsyncThunk(
   "module/delete",
   async (moduleId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(`/modules/${moduleId}`);
+      const response = await axiosInstance.delete(`/module/${moduleId}`);
 
       if (!response.data.success) {
         return rejectWithValue(response.data.message || "Failed to delete module");
@@ -143,24 +145,43 @@ export const deleteModule = createAsyncThunk(
   }
 );
 
-// Reorder modules
-export const reorderModules = createAsyncThunk(
-  "module/reorder",
-  async ({ courseId, moduleIds }: { courseId: string; moduleIds: string[] }, { rejectWithValue }) => {
+// router.patch("/:id/publish", protect, allowRoles("admin", "superadmin"), togglePublishController);
+export const togglePublishModule = createAsyncThunk(
+  "module/togglePublish",
+  async (moduleId: string, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`/course/${courseId}/modules/reorder`, { moduleIds });
+      const response = await axiosInstance.patch(`/module/${moduleId}/publish`);
 
       if (!response.data.success) {
-        return rejectWithValue(response.data.message || "Failed to reorder modules");
+        return rejectWithValue(response.data.message || "Failed to toggle publish status");
       }
 
-      return response.data.data.map(normalizeModule);
+      return response.data.data;
     } catch (error: any) {
-      const message = getErrorMessage(error, "Failed to reorder modules");
+      const message = getErrorMessage(error, "Failed to toggle publish status");
       return rejectWithValue(message);
     }
   }
 );
+
+// Reorder modules
+// export const reorderModules = createAsyncThunk(
+//   "module/reorder",
+//   async ({ courseId, moduleIds }: { courseId: string; moduleIds: string[] }, { rejectWithValue }) => {
+//     try {
+//       const response = await axiosInstance.put(`/course/${courseId}/modules/reorder`, { moduleIds });
+
+//       if (!response.data.success) {
+//         return rejectWithValue(response.data.message || "Failed to reorder modules");
+//       }
+
+//       return response.data.data;
+//     } catch (error: any) {
+//       const message = getErrorMessage(error, "Failed to reorder modules");
+//       return rejectWithValue(message);
+//     }
+//   }
+// );
 
 const moduleSlice = createSlice({
   name: "module",
@@ -177,33 +198,33 @@ const moduleSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Get Modules By Course
-      .addCase(getModulesByCourse.pending, (state) => {
+      .addCase(getAllModules.pending, (state) => {
         state.status = "loading";
         state.message = "";
       })
-      .addCase(getModulesByCourse.fulfilled, (state, action) => {
+      .addCase(getAllModules.fulfilled, (state, action) => {
         state.status = "success";
         state.modules = action.payload;
       })
-      .addCase(getModulesByCourse.rejected, (state, action) => {
+      .addCase(getAllModules.rejected, (state, action) => {
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
-      // Get Module By ID
-      .addCase(getModuleById.pending, (state) => {
-        state.status = "loading";
-        state.message = "";
-      })
-      .addCase(getModuleById.fulfilled, (state, action) => {
-        state.status = "success";
-        state.currentModule = action.payload;
-      })
-      .addCase(getModuleById.rejected, (state, action) => {
-        state.status = "failed";
-        state.message = action.payload as string;
-      })
-      
+
+      // // Get Module By ID
+      // .addCase(getModuleById.pending, (state) => {
+      //   state.status = "loading";
+      //   state.message = "";
+      // })
+      // .addCase(getModuleById.fulfilled, (state, action) => {
+      //   state.status = "success";
+      //   state.currentModule = action.payload;
+      // })
+      // .addCase(getModuleById.rejected, (state, action) => {
+      //   state.status = "failed";
+      //   state.message = action.payload as string;
+      // })
+
       // Create Module
       .addCase(createModule.pending, (state) => {
         state.status = "loading";
@@ -218,7 +239,7 @@ const moduleSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Update Module
       .addCase(updateModule.pending, (state) => {
         state.status = "loading";
@@ -239,7 +260,7 @@ const moduleSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Delete Module
       .addCase(deleteModule.pending, (state) => {
         state.status = "loading";
@@ -254,21 +275,42 @@ const moduleSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
-      // Reorder Modules
-      .addCase(reorderModules.pending, (state) => {
+
+      // Toggle Publish Module
+      .addCase(togglePublishModule.pending, (state) => {
         state.status = "loading";
         state.message = "";
       })
-      .addCase(reorderModules.fulfilled, (state, action) => {
+      .addCase(togglePublishModule.fulfilled, (state, action) => {
         state.status = "success";
-        state.modules = action.payload;
-        state.message = "Modules reordered successfully";
+        const index = state.modules.findIndex(m => m.id === action.payload.id || m._id === action.payload._id);
+        if (index !== -1) {
+          state.modules[index] = action.payload;
+        }
+        if (state.currentModule?.id === action.payload.id) {
+          state.currentModule = action.payload;
+        }
+        state.message = "Module publish status toggled successfully";
       })
-      .addCase(reorderModules.rejected, (state, action) => {
+      .addCase(togglePublishModule.rejected, (state, action) => {
         state.status = "failed";
         state.message = action.payload as string;
       });
+
+    // // Reorder Modules
+    // .addCase(reorderModules.pending, (state) => {
+    //   state.status = "loading";
+    //   state.message = "";
+    // })
+    // .addCase(reorderModules.fulfilled, (state, action) => {
+    //   state.status = "success";
+    //   state.modules = action.payload;
+    //   state.message = "Modules reordered successfully";
+    // })
+    // .addCase(reorderModules.rejected, (state, action) => {
+    //   state.status = "failed";
+    //   state.message = action.payload as string;
+    // });
   },
 });
 

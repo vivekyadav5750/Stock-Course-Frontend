@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { getAllCourses, createCourse, updateCourse, deleteCourse } from '@/redux/slice/course';
-import { getModulesByCourse, createModule, updateModule, deleteModule, reorderModules } from '@/redux/slice/module';
-import { getLessonsByModule, createLesson, updateLesson, deleteLesson, reorderLessons } from '@/redux/slice/lesson';
-import type { Course } from '@/redux/slice/course';
+import { getAllCourses, createCourse, updateCourse, deleteCourse, togglePublishCourse } from '@/redux/slice/course';
+import { getAllModules, createModule, updateModule, deleteModule, togglePublishModule } from '@/redux/slice/module';
+import { getAllLessons, createLesson, updateLesson, deleteLesson, togglePublishLesson } from '@/redux/slice/lesson';
 import type { Module } from '@/redux/slice/module';
-import type { Lesson } from '@/redux/slice/lesson';
+import type { Lesson, CreateLessonData as LessonCreateData } from '@/redux/slice/lesson';
+import { CONTENT_TYPES, Course_Types } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,18 +61,29 @@ const CourseManagement = () => {
   const { modules, status: moduleStatus } = useAppSelector((state) => state.module);
   const { lessons, status: lessonStatus } = useAppSelector((state) => state.lesson);
 
+  console.log("courses : ", courses);
+  console.log("modules : ", modules);
+  console.log("lessons : ", lessons);
+
   // Local state
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course_Types | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Dialog states
   const [newCourseDialog, setNewCourseDialog] = useState(false);
   const [editCourseDialog, setEditCourseDialog] = useState(false);
   const [newModuleDialog, setNewModuleDialog] = useState(false);
+  const [editModuleDialog, setEditModuleDialog] = useState(false);
   const [newLessonDialog, setNewLessonDialog] = useState(false);
+  const [editLessonDialog, setEditLessonDialog] = useState(false);
+
+  // Filter states
+  const [courseFilter, setCourseFilter] = useState({ category: '' });
+  const [moduleFilter, setModuleFilter] = useState({ courseId: '', category: '' });
+  const [lessonFilter, setLessonFilter] = useState({ courseId: '', moduleId: '', category: '' });
 
   // Form states for course
-  const [courseForm, setCourseForm] = useState({
+  const [courseForm, setCourseForm] = useState<any>({
     title: '',
     description: '',
     category: '',
@@ -83,37 +94,61 @@ const CourseManagement = () => {
   });
 
   // Form states for module
-  const [moduleForm, setModuleForm] = useState({
+  const [moduleForm, setModuleForm] = useState<any>({
     title: '',
+    description: '',
+    category: '',
+    courseId: '',
     order: '',
   });
 
   // Form states for lesson
-  const [lessonForm, setLessonForm] = useState({
+  const [lessonForm, setLessonForm] = useState<any>({
     moduleId: '',
+    courseId: '',
     title: '',
     description: '',
+    category: '',
+    contentType: 'video' as 'video' | 'pdf' | 'text',
     videoUrl: '',
+    pdfUrl: '',
+    textContent: '',
     duration: 0,
     order: 0,
-    isFree: false,
+    isPreview: false,
     resources: [] as { title: string; url: string; type: string }[],
   });
 
-  // Check admin permission
+  // Check admin permission and set initial filters
   useEffect(() => {
     if (user && !user.isAdmin) {
       toast.error('You do not have permission to access this page');
       navigate('/');
+      return;
+    }
+
+    // Set initial category filter from user's first category
+    if (user?.category && user?.category?.length > 0) {
+      const firstCategory = user?.category[0];
+      setCourseFilter({ category: firstCategory });
+      setModuleFilter({ courseId: '', category: firstCategory });
+      setLessonFilter({ courseId: '', moduleId: '', category: firstCategory });
+    } else if (user) {
+      // If user is loaded but has no categories, stop loading
+      setIsLoading(false);
     }
   }, [user, navigate]);
 
-  // Fetch all courses
+  // Fetch all courses based on filter
   useEffect(() => {
     const fetchCourses = async () => {
+      if (!user?.isAdmin) return;
+
       try {
         setIsLoading(true);
-        await dispatch(getAllCourses({})).unwrap();
+        await dispatch(getAllCourses({
+          category: courseFilter.category || undefined
+        })).unwrap();
       } catch (error: any) {
         console.error('Error fetching courses:', error);
         toast.error('Failed to load courses');
@@ -122,29 +157,53 @@ const CourseManagement = () => {
       }
     };
 
-    if (user?.isAdmin) {
+    if (courseFilter.category) {
       fetchCourses();
     }
-  }, [user, dispatch]);
+  }, [user?.isAdmin, courseFilter.category, dispatch]);
 
-  // Fetch modules when a course is selected
+  // Fetch all modules based on filter
   useEffect(() => {
     const fetchModules = async () => {
-      if (!selectedCourse) return;
+      if (!user?.isAdmin) return;
 
       try {
-        const courseId = selectedCourse.id || selectedCourse._id;
-        if (courseId) {
-          await dispatch(getModulesByCourse(courseId)).unwrap();
-        }
+        await dispatch(getAllModules({
+          courseId: moduleFilter.courseId || undefined,
+          category: moduleFilter.category || undefined,
+        })).unwrap();
       } catch (error: any) {
         console.error('Error fetching modules:', error);
         toast.error('Failed to load modules');
       }
     };
 
-    fetchModules();
-  }, [selectedCourse, dispatch]);
+    if (moduleFilter.category) {
+      fetchModules();
+    }
+  }, [user?.isAdmin, moduleFilter.courseId, moduleFilter.category, dispatch]);
+
+  // Fetch all lessons based on filter
+  useEffect(() => {
+    const fetchLessons = async () => {
+      if (!user?.isAdmin) return;
+
+      try {
+        await dispatch(getAllLessons({
+          courseId: lessonFilter.courseId || undefined,
+          moduleId: lessonFilter.moduleId || undefined,
+          category: lessonFilter.category || undefined,
+        })).unwrap();
+      } catch (error: any) {
+        console.error('Error fetching lessons:', error);
+        toast.error('Failed to load lessons');
+      }
+    };
+
+    if (lessonFilter.category) {
+      fetchLessons();
+    }
+  }, [user?.isAdmin, lessonFilter.courseId, lessonFilter.moduleId, lessonFilter.category, dispatch]);
 
   // Handle create course
   const handleCreateCourse = async (e: React.FormEvent) => {
@@ -218,29 +277,37 @@ const CourseManagement = () => {
     }
   };
 
-  // Handle toggle publish
-  const handleTogglePublish = async (courseId: string) => {
-    // Note: Toggle publish endpoint needs to be added to Redux slice
-    toast.info('Toggle publish feature needs to be implemented in Redux');
+  // Handle toggle publish course
+  const handleTogglePublishCourse = async (courseId: string) => {
+    try {
+      await dispatch(togglePublishCourse(courseId)).unwrap();
+      toast.success('Course publish status toggled successfully');
+    } catch (error: any) {
+      toast.error(error || 'Failed to toggle publish status');
+    }
   };
 
   // Handle create module
   const handleCreateModule = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedCourse || !moduleForm.title) {
+    if (!moduleForm.title || !moduleForm.category) {
       toast.error('Please fill in required fields');
       return;
     }
 
     try {
-      const courseId = selectedCourse.id || selectedCourse._id;
-      if (!courseId) return;
+      const courseId = moduleForm.courseId;
+      if (!courseId) {
+        toast.error('Please select a course');
+        return;
+      }
 
       await dispatch(createModule({
         courseId,
         title: moduleForm.title,
-        description: '',
+        description: moduleForm.description,
+        category: moduleForm.category,
         order: parseInt(moduleForm.order) || modules.length + 1,
       })).unwrap();
 
@@ -249,6 +316,37 @@ const CourseManagement = () => {
       toast.success('Module created successfully');
     } catch (error: any) {
       toast.error(error || 'Failed to create module');
+    }
+  };
+
+  // Handle update module
+  const handleUpdateModule = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!moduleForm.title || !moduleForm.category) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+
+    try {
+      const moduleId = moduleForm._id;
+      if (!moduleId) return;
+
+      await dispatch(updateModule({
+        moduleId,
+        data: {
+          title: moduleForm.title,
+          description: moduleForm.description,
+          category: moduleForm.category,
+          order: parseInt(moduleForm.order),
+        },
+      })).unwrap();
+
+      setEditModuleDialog(false);
+      resetModuleForm();
+      toast.success('Module updated successfully');
+    } catch (error: any) {
+      toast.error(error || 'Failed to update module');
     }
   };
 
@@ -264,37 +362,80 @@ const CourseManagement = () => {
     }
   };
 
+  // Handle toggle publish module
+  const handleTogglePublishModule = async (moduleId: string) => {
+    try {
+      await dispatch(togglePublishModule(moduleId)).unwrap();
+      toast.success('Module publish status toggled successfully');
+    } catch (error: any) {
+      toast.error(error || 'Failed to toggle publish status');
+    }
+  };
+
   // Handle create lesson
   const handleCreateLesson = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedCourse || !lessonForm.moduleId || !lessonForm.title) {
+    if (!lessonForm.moduleId || !lessonForm.courseId || !lessonForm.title || !lessonForm.category) {
       toast.error('Please fill in required fields');
       return;
     }
 
     try {
-      const courseId = selectedCourse.id || selectedCourse._id;
-      if (!courseId) return;
-
       await dispatch(createLesson({
         moduleId: lessonForm.moduleId,
-        courseId,
+        courseId: lessonForm.courseId,
         title: lessonForm.title,
         description: lessonForm.description,
+        category: lessonForm.category,
+        contentType: lessonForm.contentType,
         videoUrl: lessonForm.videoUrl,
+        pdfUrl: lessonForm.pdfUrl,
+        textContent: lessonForm.textContent,
         order: lessonForm.order || 1,
-        isFree: lessonForm.isFree,
+        isPreview: lessonForm.isPreview,
       })).unwrap();
-
-      // Refresh lessons for the selected module
-      await dispatch(getLessonsByModule(lessonForm.moduleId)).unwrap();
 
       setNewLessonDialog(false);
       resetLessonForm();
       toast.success('Lesson created successfully');
     } catch (error: any) {
       toast.error(error || 'Failed to create lesson');
+    }
+  };
+
+  // Handle update lesson
+  const handleUpdateLesson = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!lessonForm.title || !lessonForm.category) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+
+    try {
+      const lessonId = lessonForm._id;
+      if (!lessonId) return;
+
+      await dispatch(updateLesson({
+        lessonId,
+        data: {
+          title: lessonForm.title,
+          description: lessonForm.description,
+          contentType: lessonForm.contentType,
+          videoUrl: lessonForm.videoUrl,
+          pdfUrl: lessonForm.pdfUrl,
+          textContent: lessonForm.textContent,
+          order: lessonForm.order,
+          isPreview: lessonForm.isPreview,
+        },
+      })).unwrap();
+
+      setEditLessonDialog(false);
+      resetLessonForm();
+      toast.success('Lesson updated successfully');
+    } catch (error: any) {
+      toast.error(error || 'Failed to update lesson');
     }
   };
 
@@ -308,6 +449,16 @@ const CourseManagement = () => {
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Failed to delete lesson';
       toast.error(message);
+    }
+  };
+
+  // Handle toggle publish lesson
+  const handleTogglePublishLesson = async (lessonId: string) => {
+    try {
+      await dispatch(togglePublishLesson(lessonId)).unwrap();
+      toast.success('Lesson publish status toggled successfully');
+    } catch (error: any) {
+      toast.error(error || 'Failed to toggle publish status');
     }
   };
 
@@ -327,6 +478,9 @@ const CourseManagement = () => {
   const resetModuleForm = () => {
     setModuleForm({
       title: '',
+      description: '',
+      category: '',
+      courseId: '',
       order: '',
     });
   };
@@ -334,29 +488,67 @@ const CourseManagement = () => {
   const resetLessonForm = () => {
     setLessonForm({
       moduleId: '',
+      courseId: '',
       title: '',
       description: '',
+      category: '',
+      contentType: 'video',
       videoUrl: '',
+      pdfUrl: '',
+      textContent: '',
       duration: 0,
       order: 0,
-      isFree: false,
+      isPreview: false,
       resources: [],
     });
   };
 
-  // Open edit dialog
-  const openEditDialog = (course: Course) => {
-    setSelectedCourse(course);
+  // Open edit dialogs
+  const openEditCourseDialog = (course: Course_Types) => {
     setCourseForm({
+      ...courseForm,
+      _id: course._id || course.id,
       title: course.title,
       description: course.description,
-      category: course.category,
-      level: course.level,
+      category: course.category || '',
+      level: course.level || 'Beginner',
       price: course.price.toString(),
       duration: course.duration || 0,
       thumbnail: course.thumbnail || '',
     });
     setEditCourseDialog(true);
+  };
+
+  const openEditModuleDialog = (module: any) => {
+    setModuleForm({
+      _id: module._id || module.id,
+      courseId: module.courseId,
+      title: module.title,
+      description: module.description || '',
+      category: module.category || '',
+      order: module.order?.toString() || '',
+    });
+    setEditModuleDialog(true);
+  };
+
+  const openEditLessonDialog = (lesson: any) => {
+    setLessonForm({
+      _id: lesson._id || lesson.id,
+      moduleId: lesson.moduleId,
+      courseId: lesson.courseId,
+      title: lesson.title,
+      description: lesson.description || '',
+      category: lesson.category || '',
+      contentType: lesson.contentType,
+      videoUrl: lesson.videoUrl || '',
+      pdfUrl: lesson.pdfUrl || '',
+      textContent: lesson.textContent || '',
+      duration: lesson.duration || 0,
+      order: lesson.order || 0,
+      isPreview: lesson.isPreview || false,
+      resources: lesson.resources || [],
+    });
+    setEditLessonDialog(true);
   };
 
   if (isLoading) {
@@ -424,18 +616,24 @@ const CourseManagement = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="category">Category</Label>
-                      <Input
-                        id="category"
+                      <Label htmlFor="category">Category *</Label>
+                      <Select
                         value={courseForm.category}
-                        onChange={(e) =>
-                          setCourseForm({
-                            ...courseForm,
-                            category: e.target.value,
-                          })
+                        onValueChange={(value) =>
+                          setCourseForm({ ...courseForm, category: value })
                         }
-                        placeholder="e.g., Stock Market, Trading"
-                      />
+                      >
+                        <SelectTrigger id="category">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {user?.category && user?.category?.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label htmlFor="level">Level</Label>
@@ -519,6 +717,28 @@ const CourseManagement = () => {
           </TabsList>
 
           <TabsContent value="courses" className="mt-6">
+            {/* Category Filter */}
+            <div className="mb-6 flex gap-4 items-end">
+              <div className="w-64">
+                <Label htmlFor="courseCategory">Filter by Category</Label>
+                <Select
+                  value={courseFilter.category}
+                  onValueChange={(value) => setCourseFilter({ category: value })}
+                >
+                  <SelectTrigger id="courseCategory">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {user?.category && user?.category?.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             {courses.length === 0 ? (
               <Card>
                 <CardContent className="pt-6 text-center">
@@ -541,8 +761,8 @@ const CourseManagement = () => {
                     >
                       <Card
                         className={`cursor-pointer transition-all ${selectedId === courseId
-                            ? 'ring-2 ring-primary'
-                            : ''
+                          ? 'ring-2 ring-primary'
+                          : ''
                           }`}
                         onClick={() => setSelectedCourse(course)}
                       >
@@ -580,7 +800,7 @@ const CourseManagement = () => {
                             variant="outline"
                             onClick={(e) => {
                               e.stopPropagation();
-                              openEditDialog(course);
+                              openEditCourseDialog(course);
                             }}
                           >
                             <Edit className="h-4 w-4" />
@@ -590,7 +810,7 @@ const CourseManagement = () => {
                             variant="outline"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (courseId) handleTogglePublish(courseId);
+                              if (courseId) handleTogglePublishCourse(courseId);
                             }}
                           >
                             {course.isPublished ? (
@@ -621,73 +841,242 @@ const CourseManagement = () => {
           {selectedCourse && (
             <>
               <TabsContent value="modules" className="mt-6">
-                <div className="mb-4 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">
-                    Modules for {selectedCourse.title}
-                  </h2>
-                  <Dialog
-                    open={newModuleDialog}
-                    onOpenChange={setNewModuleDialog}
-                  >
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Module
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Create New Module</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleCreateModule}>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="moduleTitle">Title *</Label>
-                            <Input
-                              id="moduleTitle"
-                              value={moduleForm.title}
-                              onChange={(e) =>
-                                setModuleForm({
-                                  ...moduleForm,
-                                  title: e.target.value,
-                                })
-                              }
-                              required
-                            />
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">
+                      Modules for {selectedCourse.title}
+                    </h2>
+                    <Dialog
+                      open={newModuleDialog}
+                      onOpenChange={setNewModuleDialog}
+                    >
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="h-4 w-4 mr-2" />
+                          New Module
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Module</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateModule}>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="moduleTitle">Title *</Label>
+                              <Input
+                                id="moduleTitle"
+                                value={moduleForm.title}
+                                onChange={(e) =>
+                                  setModuleForm({
+                                    ...moduleForm,
+                                    title: e.target.value,
+                                  })
+                                }
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="moduleDescription">Description</Label>
+                              <Textarea
+                                id="moduleDescription"
+                                value={moduleForm.description}
+                                onChange={(e) =>
+                                  setModuleForm({
+                                    ...moduleForm,
+                                    description: e.target.value,
+                                  })
+                                }
+                                rows={3}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="moduleCategory">Category *</Label>
+                              <Select
+                                value={moduleForm.category}
+                                onValueChange={(value) =>
+                                  setModuleForm({ ...moduleForm, category: value })
+                                }
+                              >
+                                <SelectTrigger id="moduleCategory">
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {user?.category && user?.category?.map((cat) => (
+                                    <SelectItem key={cat} value={cat}>
+                                      {cat}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor="moduleOrder">Order</Label>
+                              <Input
+                                id="moduleOrder"
+                                type="number"
+                                value={moduleForm.order}
+                                onChange={(e) =>
+                                  setModuleForm({
+                                    ...moduleForm,
+                                    order: e.target.value,
+                                  })
+                                }
+                                placeholder={`${modules.length + 1}`}
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <Label htmlFor="moduleOrder">Order</Label>
-                            <Input
-                              id="moduleOrder"
-                              type="number"
-                              value={moduleForm.order}
-                              onChange={(e) =>
-                                setModuleForm({
-                                  ...moduleForm,
-                                  order: e.target.value,
-                                })
-                              }
-                              placeholder={`${modules.length + 1}`}
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter className="mt-6">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              setNewModuleDialog(false);
-                              resetModuleForm();
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button type="submit">Create Module</Button>
-                        </DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
+                          <DialogFooter className="mt-6">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setNewModuleDialog(false);
+                                resetModuleForm();
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button type="submit">Create Module</Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+
+                  {/* Module Filters */}
+                  <div className="flex gap-4 items-end">
+                    <div className="w-64">
+                      <Label htmlFor="moduleCourse">Filter by Course (Optional)</Label>
+                      <Select
+                        value={moduleFilter.courseId || 'none'}
+                        onValueChange={(value) => setModuleFilter({ ...moduleFilter, courseId: value === 'none' ? '' : value })}
+                      >
+                        <SelectTrigger id="moduleCourse">
+                          <SelectValue placeholder="All courses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">All courses</SelectItem>
+                          {courses.map((course) => {
+                            const courseId = course.id || course._id;
+                            if (!courseId) return null;
+                            return (
+                              <SelectItem key={courseId} value={courseId}>
+                                {course.title}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-64">
+                      <Label htmlFor="moduleCategory">Filter by Category</Label>
+                      <Select
+                        value={moduleFilter.category}
+                        onValueChange={(value) => setModuleFilter({ ...moduleFilter, category: value })}
+                      >
+                        <SelectTrigger id="moduleCategory">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {user?.category && user?.category?.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Edit Module Dialog */}
+                <Dialog open={editModuleDialog} onOpenChange={setEditModuleDialog}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Module</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleUpdateModule}>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="editModuleTitle">Title *</Label>
+                          <Input
+                            id="editModuleTitle"
+                            value={moduleForm.title}
+                            onChange={(e) =>
+                              setModuleForm({
+                                ...moduleForm,
+                                title: e.target.value,
+                              })
+                            }
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="editModuleDescription">Description</Label>
+                          <Textarea
+                            id="editModuleDescription"
+                            value={moduleForm.description}
+                            onChange={(e) =>
+                              setModuleForm({
+                                ...moduleForm,
+                                description: e.target.value,
+                              })
+                            }
+                            rows={3}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="editModuleCategory">Category *</Label>
+                          <Select
+                            value={moduleForm.category}
+                            onValueChange={(value) =>
+                              setModuleForm({ ...moduleForm, category: value })
+                            }
+                          >
+                            <SelectTrigger id="editModuleCategory">
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {user?.category && user?.category?.map((cat) => (
+                                <SelectItem key={cat} value={cat}>
+                                  {cat}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="editModuleOrder">Order</Label>
+                          <Input
+                            id="editModuleOrder"
+                            type="number"
+                            value={moduleForm.order}
+                            onChange={(e) =>
+                              setModuleForm({
+                                ...moduleForm,
+                                order: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter className="mt-6">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setEditModuleDialog(false);
+                            resetModuleForm();
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit">Update Module</Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
 
                 {modules.length === 0 ? (
                   <Card>
@@ -699,7 +1088,7 @@ const CourseManagement = () => {
                   </Card>
                 ) : (
                   <div className="space-y-4">
-                    {modules
+                    {[...modules]
                       .sort((a, b) => a.order - b.order)
                       .map((module, index) => {
                         const moduleId = module.id || module._id;
@@ -711,14 +1100,47 @@ const CourseManagement = () => {
                                   <CardTitle className="text-lg">
                                     Module {module.order}: {module.title}
                                   </CardTitle>
+                                  {module.description && (
+                                    <CardDescription className="mt-2">
+                                      {module.description}
+                                    </CardDescription>
+                                  )}
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <Badge variant={module.isPublished ? 'default' : 'secondary'}>
+                                      {module.isPublished ? 'Published' : 'Draft'}
+                                    </Badge>
+                                    {module.category && (
+                                      <Badge variant="outline">{module.category}</Badge>
+                                    )}
+                                  </div>
                                 </div>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => moduleId && handleDeleteModule(moduleId)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openEditModuleDialog(module)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => moduleId && handleTogglePublishModule(moduleId)}
+                                  >
+                                    {module.isPublished ? (
+                                      <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                      <Eye className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => moduleId && handleDeleteModule(moduleId)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             </CardHeader>
                           </Card>
@@ -729,146 +1151,293 @@ const CourseManagement = () => {
               </TabsContent>
 
               <TabsContent value="lessons" className="mt-6">
-                <div className="mb-4 flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">
-                    Lessons for {selectedCourse.title}
-                  </h2>
-                  <Dialog
-                    open={newLessonDialog}
-                    onOpenChange={setNewLessonDialog}
-                  >
-                    <DialogTrigger asChild>
-                      <Button disabled={modules.length === 0}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Lesson
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>Create New Lesson</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleCreateLesson}>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="moduleSelect">Module *</Label>
-                            <Select
-                              value={lessonForm.moduleId}
-                              onValueChange={(value) =>
-                                setLessonForm({
-                                  ...lessonForm,
-                                  moduleId: value,
-                                })
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a module" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {modules.map((module) => {
-                                  const moduleId = module.id || module._id;
-                                  return (
-                                    <SelectItem key={moduleId} value={moduleId || ''}>
-                                      {module.title}
-                                    </SelectItem>
-                                  );
-                                })}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="lessonTitle">Title *</Label>
-                            <Input
-                              id="lessonTitle"
-                              value={lessonForm.title}
-                              onChange={(e) =>
-                                setLessonForm({
-                                  ...lessonForm,
-                                  title: e.target.value,
-                                })
-                              }
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="description">Description</Label>
-                            <Textarea
-                              id="description"
-                              value={lessonForm.description}
-                              onChange={(e) =>
-                                setLessonForm({
-                                  ...lessonForm,
-                                  description: e.target.value,
-                                })
-                              }
-                              rows={3}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="videoUrl">Video URL</Label>
-                            <Input
-                              id="videoUrl"
-                              type="url"
-                              value={lessonForm.videoUrl}
-                              onChange={(e) =>
-                                setLessonForm({
-                                  ...lessonForm,
-                                  videoUrl: e.target.value,
-                                })
-                              }
-                              placeholder="https://..."
-                            />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold">
+                      Lessons for {selectedCourse.title}
+                    </h2>
+                    <Dialog
+                      open={newLessonDialog}
+                      onOpenChange={setNewLessonDialog}
+                    >
+                      <DialogTrigger asChild>
+                        <Button disabled={modules.length === 0}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          New Lesson
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Create New Lesson</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleCreateLesson}>
+                          <div className="space-y-4">
                             <div>
-                              <Label htmlFor="lessonOrder">Order</Label>
+                              <Label htmlFor="moduleSelect">Module *</Label>
+                              <Select
+                                value={lessonForm.moduleId}
+                                onValueChange={(value) =>
+                                  setLessonForm({
+                                    ...lessonForm,
+                                    moduleId: value,
+                                  })
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a module" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {modules.map((module) => {
+                                    const moduleId = module.id || module._id;
+                                    if (!moduleId) return null;
+                                    return (
+                                      <SelectItem key={moduleId} value={moduleId}>
+                                        {module.title}
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor="lessonTitle">Title *</Label>
                               <Input
-                                id="lessonOrder"
-                                type="number"
-                                value={lessonForm.order}
+                                id="lessonTitle"
+                                value={lessonForm.title}
                                 onChange={(e) =>
                                   setLessonForm({
                                     ...lessonForm,
-                                    order: parseInt(e.target.value) || 0,
+                                    title: e.target.value,
                                   })
                                 }
-                                placeholder="1"
+                                required
                               />
                             </div>
-                            <div className="flex items-center space-x-2 pt-6">
-                              <input
-                                type="checkbox"
-                                id="isFree"
-                                checked={lessonForm.isFree}
+                            <div>
+                              <Label htmlFor="description">Description</Label>
+                              <Textarea
+                                id="description"
+                                value={lessonForm.description}
                                 onChange={(e) =>
                                   setLessonForm({
                                     ...lessonForm,
-                                    isFree: e.target.checked,
+                                    description: e.target.value,
                                   })
                                 }
-                                className="rounded"
+                                rows={3}
                               />
-                              <Label htmlFor="isFree">
-                                Free lesson
-                              </Label>
+                            </div>
+                            <div>
+                              <Label htmlFor="lessonCategory">Category *</Label>
+                              <Select
+                                value={lessonForm.category}
+                                onValueChange={(value) =>
+                                  setLessonForm({ ...lessonForm, category: value })
+                                }
+                              >
+                                <SelectTrigger id="lessonCategory">
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {user?.category && user?.category?.map((cat) => (
+                                    <SelectItem key={cat} value={cat}>
+                                      {cat}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor="contentType">Content Type *</Label>
+                              <Select
+                                value={lessonForm.contentType}
+                                onValueChange={(value: any) =>
+                                  setLessonForm({ ...lessonForm, contentType: value })
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={CONTENT_TYPES.VIDEO}>Video</SelectItem>
+                                  <SelectItem value={CONTENT_TYPES.PDF}>PDF</SelectItem>
+                                  <SelectItem value={CONTENT_TYPES.TEXT}>Text</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {lessonForm.contentType === CONTENT_TYPES.VIDEO && (
+                              <div>
+                                <Label htmlFor="videoUrl">Video URL *</Label>
+                                <Input
+                                  id="videoUrl"
+                                  type="url"
+                                  value={lessonForm.videoUrl}
+                                  onChange={(e) =>
+                                    setLessonForm({
+                                      ...lessonForm,
+                                      videoUrl: e.target.value,
+                                    })
+                                  }
+                                  placeholder="https://..."
+                                  required
+                                />
+                              </div>
+                            )}
+                            {lessonForm.contentType === CONTENT_TYPES.PDF && (
+                              <div>
+                                <Label htmlFor="pdfUrl">PDF URL *</Label>
+                                <Input
+                                  id="pdfUrl"
+                                  type="url"
+                                  value={lessonForm.pdfUrl}
+                                  onChange={(e) =>
+                                    setLessonForm({
+                                      ...lessonForm,
+                                      pdfUrl: e.target.value,
+                                    })
+                                  }
+                                  placeholder="https://..."
+                                  required
+                                />
+                              </div>
+                            )}
+                            {lessonForm.contentType === CONTENT_TYPES.TEXT && (
+                              <div>
+                                <Label htmlFor="textContent">Text Content *</Label>
+                                <Textarea
+                                  id="textContent"
+                                  value={lessonForm.textContent}
+                                  onChange={(e) =>
+                                    setLessonForm({
+                                      ...lessonForm,
+                                      textContent: e.target.value,
+                                    })
+                                  }
+                                  rows={6}
+                                  required
+                                />
+                              </div>
+                            )}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="lessonOrder">Order</Label>
+                                <Input
+                                  id="lessonOrder"
+                                  type="number"
+                                  value={lessonForm.order}
+                                  onChange={(e) =>
+                                    setLessonForm({
+                                      ...lessonForm,
+                                      order: parseInt(e.target.value) || 0,
+                                    })
+                                  }
+                                  placeholder="1"
+                                />
+                              </div>
+                              <div className="flex items-center space-x-2 pt-6">
+                                <input
+                                  type="checkbox"
+                                  id="isPreview"
+                                  checked={lessonForm.isPreview}
+                                  onChange={(e) =>
+                                    setLessonForm({
+                                      ...lessonForm,
+                                      isPreview: e.target.checked,
+                                    })
+                                  }
+                                  className="rounded"
+                                />
+                                <Label htmlFor="isPreview">
+                                  Preview lesson
+                                </Label>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <DialogFooter className="mt-6">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              setNewLessonDialog(false);
-                              resetLessonForm();
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button type="submit">Create Lesson</Button>
-                        </DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
+                          <DialogFooter className="mt-6">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setNewLessonDialog(false);
+                                resetLessonForm();
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button type="submit">Create Lesson</Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+
+                {/* Lesson Filters */}
+                <div className="flex gap-4 items-end mb-6">
+                  <div className="w-64">
+                    <Label htmlFor="lessonCourse">Filter by Course (Optional)</Label>
+                    <Select
+                      value={lessonFilter.courseId || 'none'}
+                      onValueChange={(value) => setLessonFilter({ ...lessonFilter, courseId: value === 'none' ? '' : value })}
+                    >
+                      <SelectTrigger id="lessonCourse">
+                        <SelectValue placeholder="All courses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">All courses</SelectItem>
+                        {courses.map((course) => {
+                          const courseId = course.id || course._id;
+                          if (!courseId) return null;
+                          return (
+                            <SelectItem key={courseId} value={courseId}>
+                              {course.title}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-64">
+                    <Label htmlFor="lessonModule">Filter by Module (Optional)</Label>
+                    <Select
+                      value={lessonFilter.moduleId || 'none'}
+                      onValueChange={(value) => setLessonFilter({ ...lessonFilter, moduleId: value === 'none' ? '' : value })}
+                    >
+                      <SelectTrigger id="lessonModule">
+                        <SelectValue placeholder="All modules" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">All modules</SelectItem>
+                        {modules.map((module) => {
+                          const moduleId = module.id || module._id;
+                          if (!moduleId) return null;
+                          return (
+                            <SelectItem key={moduleId} value={moduleId}>
+                              {module.title}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="w-64">
+                    <Label htmlFor="lessonCategory">Filter by Category</Label>
+                    <Select
+                      value={lessonFilter.category}
+                      onValueChange={(value) => setLessonFilter({ ...lessonFilter, category: value })}
+                    >
+                      <SelectTrigger id="lessonCategory">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {user?.category && user?.category?.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {modules.length === 0 ? (
@@ -889,7 +1458,7 @@ const CourseManagement = () => {
                   </Card>
                 ) : (
                   <div className="space-y-4">
-                    {lessons
+                    {[...lessons]
                       .sort((a, b) => a.order - b.order)
                       .map((lesson) => {
                         const lessonId = lesson.id || lesson._id;
@@ -897,27 +1466,60 @@ const CourseManagement = () => {
                           <Card key={lessonId}>
                             <CardHeader>
                               <div className="flex justify-between items-start">
-                                <div>
+                                <div className="flex-1">
                                   <CardTitle className="text-lg flex items-center gap-2">
                                     <Video className="h-4 w-4" />
                                     {lesson.title}
                                   </CardTitle>
-                                  <CardDescription>
-                                    {lesson.duration && `Duration: ${lesson.duration} min`}
-                                    {lesson.isFree && (
-                                      <Badge variant="outline" className="ml-2">
-                                        Free
+                                  <CardDescription className="mt-2">
+                                    {lesson.description}
+                                  </CardDescription>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    {lesson.duration && (
+                                      <span className="text-sm text-muted-foreground">
+                                        Duration: {lesson.duration} min
+                                      </span>
+                                    )}
+                                    {lesson.isPreview && (
+                                      <Badge variant="outline">
+                                        Preview
                                       </Badge>
                                     )}
-                                  </CardDescription>
+                                    <Badge variant={lesson.isPublished ? 'default' : 'secondary'}>
+                                      {lesson.isPublished ? 'Published' : 'Draft'}
+                                    </Badge>
+                                    {lesson.category && (
+                                      <Badge variant="outline">{lesson.category}</Badge>
+                                    )}
+                                  </div>
                                 </div>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => lessonId && handleDeleteLesson(lessonId)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openEditLessonDialog(lesson)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => lessonId && handleTogglePublishLesson(lessonId)}
+                                  >
+                                    {lesson.isPublished ? (
+                                      <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                      <Eye className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => lessonId && handleDeleteLesson(lessonId)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             </CardHeader>
                           </Card>
@@ -963,14 +1565,24 @@ const CourseManagement = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="editCategory">Category</Label>
-                    <Input
-                      id="editCategory"
+                    <Label htmlFor="editCategory">Category *</Label>
+                    <Select
                       value={courseForm.category}
-                      onChange={(e) =>
-                        setCourseForm({ ...courseForm, category: e.target.value })
+                      onValueChange={(value) =>
+                        setCourseForm({ ...courseForm, category: value })
                       }
-                    />
+                    >
+                      <SelectTrigger id="editCategory">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {user?.category && user?.category?.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label htmlFor="editLevel">Level</Label>
@@ -1026,6 +1638,182 @@ const CourseManagement = () => {
                   Cancel
                 </Button>
                 <Button type="submit">Update Course</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Lesson Dialog */}
+        <Dialog open={editLessonDialog} onOpenChange={setEditLessonDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Lesson</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdateLesson}>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="editLessonTitle">Title *</Label>
+                  <Input
+                    id="editLessonTitle"
+                    value={lessonForm.title}
+                    onChange={(e) =>
+                      setLessonForm({
+                        ...lessonForm,
+                        title: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editLessonDescription">Description</Label>
+                  <Textarea
+                    id="editLessonDescription"
+                    value={lessonForm.description}
+                    onChange={(e) =>
+                      setLessonForm({
+                        ...lessonForm,
+                        description: e.target.value,
+                      })
+                    }
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editLessonCategory">Category *</Label>
+                  <Select
+                    value={lessonForm.category}
+                    onValueChange={(value) =>
+                      setLessonForm({ ...lessonForm, category: value })
+                    }
+                  >
+                    <SelectTrigger id="editLessonCategory">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {user?.category && user?.category?.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="editContentType">Content Type *</Label>
+                  <Select
+                    value={lessonForm.contentType}
+                    onValueChange={(value: any) =>
+                      setLessonForm({ ...lessonForm, contentType: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={CONTENT_TYPES.VIDEO}>Video</SelectItem>
+                      <SelectItem value={CONTENT_TYPES.PDF}>PDF</SelectItem>
+                      <SelectItem value={CONTENT_TYPES.TEXT}>Text</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {lessonForm.contentType === CONTENT_TYPES.VIDEO && (
+                  <div>
+                    <Label htmlFor="editVideoUrl">Video URL *</Label>
+                    <Input
+                      id="editVideoUrl"
+                      type="url"
+                      value={lessonForm.videoUrl}
+                      onChange={(e) =>
+                        setLessonForm({
+                          ...lessonForm,
+                          videoUrl: e.target.value,
+                        })
+                      }
+                      placeholder="https://..."
+                      required
+                    />
+                  </div>
+                )}
+                {lessonForm.contentType === CONTENT_TYPES.PDF && (
+                  <div>
+                    <Label htmlFor="editPdfUrl">PDF URL *</Label>
+                    <Input
+                      id="editPdfUrl"
+                      type="url"
+                      value={lessonForm.pdfUrl}
+                      onChange={(e) =>
+                        setLessonForm({
+                          ...lessonForm,
+                          pdfUrl: e.target.value,
+                        })
+                      }
+                      placeholder="https://..."
+                      required
+                    />
+                  </div>
+                )}
+                {lessonForm.contentType === CONTENT_TYPES.TEXT && (
+                  <div>
+                    <Label htmlFor="editTextContent">Text Content *</Label>
+                    <Textarea
+                      id="editTextContent"
+                      value={lessonForm.textContent}
+                      onChange={(e) =>
+                        setLessonForm({
+                          ...lessonForm,
+                          textContent: e.target.value,
+                        })
+                      }
+                      rows={6}
+                      required
+                    />
+                  </div>
+                )}
+                <div>
+                  <Label htmlFor="editOrder">Order</Label>
+                  <Input
+                    id="editOrder"
+                    type="number"
+                    value={lessonForm.order}
+                    onChange={(e) =>
+                      setLessonForm({
+                        ...lessonForm,
+                        order: parseInt(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="editIsPreview"
+                    checked={lessonForm.isPreview}
+                    onChange={(e) =>
+                      setLessonForm({
+                        ...lessonForm,
+                        isPreview: e.target.checked,
+                      })
+                    }
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="editIsPreview">
+                    Allow as preview (free)
+                  </Label>
+                </div>
+              </div>
+              <DialogFooter className="mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditLessonDialog(false);
+                    resetLessonForm();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Update Lesson</Button>
               </DialogFooter>
             </form>
           </DialogContent>
