@@ -8,6 +8,9 @@ import { getAllLessons, createLesson, updateLesson, deleteLesson, togglePublishL
 import type { Module } from '@/redux/slice/module';
 import type { Lesson, CreateLessonData as LessonCreateData } from '@/redux/slice/lesson';
 import { CONTENT_TYPES, Course_Types } from '@/types';
+import { CourseForm } from '@/components/CourseForm';
+import { ModuleForm } from '@/components/ModuleForm';
+import { LessonForm } from '@/components/LessonForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -202,22 +205,20 @@ const CourseManagement = () => {
   }, [user?.isAdmin, lessonFilter.courseId, lessonFilter.moduleId, lessonFilter.category, dispatch]);
 
   // Handle create course
-  const handleCreateCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!courseForm.title || !courseForm.description) {
+  const handleCreateCourse = async (formData: any) => {
+    if (!formData.title || !formData.description) {
       toast.error('Please fill in required fields');
       return;
     }
 
     try {
       await dispatch(createCourse({
-        title: courseForm.title,
-        description: courseForm.description,
-        category: courseForm.category,
-        level: courseForm.level,
-        price: parseFloat(courseForm.price) || 0,
-        thumbnail: courseForm.thumbnail,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        level: formData.level,
+        price: parseFloat(formData.price) || 0,
+        thumbnail: formData.thumbnail,
       })).unwrap();
 
       setNewCourseDialog(false);
@@ -284,16 +285,14 @@ const CourseManagement = () => {
   };
 
   // Handle create module
-  const handleCreateModule = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!moduleForm.title || !moduleForm.category) {
+  const handleCreateModule = async (formData: any) => {
+    if (!formData.title || !formData.category) {
       toast.error('Please fill in required fields');
       return;
     }
 
     try {
-      const courseId = moduleForm.courseId;
+      const courseId = formData.courseId;
       if (!courseId) {
         toast.error('Please select a course');
         return;
@@ -301,10 +300,10 @@ const CourseManagement = () => {
 
       await dispatch(createModule({
         courseId,
-        title: moduleForm.title,
-        description: moduleForm.description,
-        category: moduleForm.category,
-        order: parseInt(moduleForm.order) || modules.length + 1,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        order: parseInt(formData.order) || modules.length + 1,
       })).unwrap();
 
       setNewModuleDialog(false);
@@ -369,27 +368,27 @@ const CourseManagement = () => {
   };
 
   // Handle create lesson
-  const handleCreateLesson = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateLesson = async (formData: any) => {
+    console.log('Creating lesson with data:', formData);
 
-    if (!lessonForm.moduleId || !lessonForm.courseId || !lessonForm.title || !lessonForm.category) {
+    if (!formData.moduleId || !formData.courseId || !formData.title || !formData.category) {
       toast.error('Please fill in required fields');
       return;
     }
 
     try {
       await dispatch(createLesson({
-        moduleId: lessonForm.moduleId,
-        courseId: lessonForm.courseId,
-        title: lessonForm.title,
-        description: lessonForm.description,
-        category: lessonForm.category,
-        contentType: lessonForm.contentType,
-        videoUrl: lessonForm.videoUrl,
-        pdfUrl: lessonForm.pdfUrl,
-        textContent: lessonForm.textContent,
-        order: lessonForm.order || 1,
-        isPreview: lessonForm.isPreview,
+        moduleId: formData.moduleId,
+        courseId: formData.courseId,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        contentType: formData.contentType,
+        videoUrl: formData.videoUrl,
+        pdfUrl: formData.pdfUrl,
+        textContent: formData.textContent,
+        order: parseInt(formData.order) || 1,
+        isPreview: formData.isPreview,
       })).unwrap();
 
       setNewLessonDialog(false);
@@ -582,121 +581,14 @@ const CourseManagement = () => {
                   Add a new course to your platform
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleCreateCourse}>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="title">Title *</Label>
-                    <Input
-                      id="title"
-                      value={courseForm.title}
-                      onChange={(e) =>
-                        setCourseForm({ ...courseForm, title: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Description *</Label>
-                    <Textarea
-                      id="description"
-                      value={courseForm.description}
-                      onChange={(e) =>
-                        setCourseForm({
-                          ...courseForm,
-                          description: e.target.value,
-                        })
-                      }
-                      rows={4}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="category">Category *</Label>
-                      <Select
-                        value={courseForm.category}
-                        onValueChange={(value) =>
-                          setCourseForm({ ...courseForm, category: value })
-                        }
-                      >
-                        <SelectTrigger id="category">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {user?.category && user?.category?.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="level">Level</Label>
-                      <Select
-                        value={courseForm.level}
-                        onValueChange={(value: any) =>
-                          setCourseForm({ ...courseForm, level: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Beginner">Beginner</SelectItem>
-                          <SelectItem value="Intermediate">
-                            Intermediate
-                          </SelectItem>
-                          <SelectItem value="Advanced">Advanced</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="price">Price ($)</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        step="0.01"
-                        value={courseForm.price}
-                        onChange={(e) =>
-                          setCourseForm({ ...courseForm, price: e.target.value })
-                        }
-                        placeholder="99.99"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="thumbnail">Thumbnail URL</Label>
-                    <Input
-                      id="thumbnail"
-                      type="url"
-                      value={courseForm.thumbnail}
-                      onChange={(e) =>
-                        setCourseForm({
-                          ...courseForm,
-                          thumbnail: e.target.value,
-                        })
-                      }
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-                <DialogFooter className="mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setNewCourseDialog(false);
-                      resetCourseForm();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit">Create Course</Button>
-                </DialogFooter>
-              </form>
+              <CourseForm
+                userCategories={user?.category || []}
+                onSubmit={handleCreateCourse}
+                onCancel={() => {
+                  setNewCourseDialog(false);
+                  resetCourseForm();
+                }}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -856,86 +748,16 @@ const CourseManagement = () => {
                         <DialogHeader>
                           <DialogTitle>Create New Module</DialogTitle>
                         </DialogHeader>
-                        <form onSubmit={handleCreateModule}>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="moduleTitle">Title *</Label>
-                              <Input
-                                id="moduleTitle"
-                                value={moduleForm.title}
-                                onChange={(e) =>
-                                  setModuleForm({
-                                    ...moduleForm,
-                                    title: e.target.value,
-                                  })
-                                }
-                                required
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="moduleDescription">Description</Label>
-                              <Textarea
-                                id="moduleDescription"
-                                value={moduleForm.description}
-                                onChange={(e) =>
-                                  setModuleForm({
-                                    ...moduleForm,
-                                    description: e.target.value,
-                                  })
-                                }
-                                rows={3}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="moduleCategory">Category *</Label>
-                              <Select
-                                value={moduleForm.category}
-                                onValueChange={(value) =>
-                                  setModuleForm({ ...moduleForm, category: value })
-                                }
-                              >
-                                <SelectTrigger id="moduleCategory">
-                                  <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {user?.category && user?.category?.map((cat) => (
-                                    <SelectItem key={cat} value={cat}>
-                                      {cat}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="moduleOrder">Order</Label>
-                              <Input
-                                id="moduleOrder"
-                                type="number"
-                                value={moduleForm.order}
-                                onChange={(e) =>
-                                  setModuleForm({
-                                    ...moduleForm,
-                                    order: e.target.value,
-                                  })
-                                }
-                                placeholder={`${modules.length + 1}`}
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter className="mt-6">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => {
-                                setNewModuleDialog(false);
-                                resetModuleForm();
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                            <Button type="submit">Create Module</Button>
-                          </DialogFooter>
-                        </form>
+                        <ModuleForm
+                          courses={courses}
+                          userCategories={user?.category || []}
+                          modulesCount={modules.length}
+                          onSubmit={handleCreateModule}
+                          onCancel={() => {
+                            setNewModuleDialog(false);
+                            resetModuleForm();
+                          }}
+                        />
                       </DialogContent>
                     </Dialog>
                   </div>
@@ -1039,6 +861,32 @@ const CourseManagement = () => {
                                   {cat}
                                 </SelectItem>
                               ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="editModuleCourseId">Course *</Label>
+                          <Select
+                            value={moduleForm.courseId}
+                            onValueChange={(value) =>
+                              setModuleForm({ ...moduleForm, courseId: value })
+                            }
+                          >
+                            <SelectTrigger id="editModuleCourseId">
+                              <SelectValue placeholder="Select a course" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {courses
+                                .filter((course) => !moduleForm.category || course.category === moduleForm.category)
+                                .map((course) => {
+                                  const courseId = course.id || course._id;
+                                  if (!courseId) return null;
+                                  return (
+                                    <SelectItem key={courseId} value={courseId}>
+                                      {course.title}
+                                    </SelectItem>
+                                  );
+                                })}
                             </SelectContent>
                           </Select>
                         </div>
@@ -1166,203 +1014,17 @@ const CourseManagement = () => {
                         <DialogHeader>
                           <DialogTitle>Create New Lesson</DialogTitle>
                         </DialogHeader>
-                        <form onSubmit={handleCreateLesson}>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="moduleSelect">Module *</Label>
-                              <Select
-                                value={lessonForm.moduleId}
-                                onValueChange={(value) =>
-                                  setLessonForm({
-                                    ...lessonForm,
-                                    moduleId: value,
-                                  })
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a module" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {modules.map((module) => {
-                                    const moduleId = module.id || module._id;
-                                    if (!moduleId) return null;
-                                    return (
-                                      <SelectItem key={moduleId} value={moduleId}>
-                                        {module.title}
-                                      </SelectItem>
-                                    );
-                                  })}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="lessonTitle">Title *</Label>
-                              <Input
-                                id="lessonTitle"
-                                value={lessonForm.title}
-                                onChange={(e) =>
-                                  setLessonForm({
-                                    ...lessonForm,
-                                    title: e.target.value,
-                                  })
-                                }
-                                required
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="description">Description</Label>
-                              <Textarea
-                                id="description"
-                                value={lessonForm.description}
-                                onChange={(e) =>
-                                  setLessonForm({
-                                    ...lessonForm,
-                                    description: e.target.value,
-                                  })
-                                }
-                                rows={3}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="lessonCategory">Category *</Label>
-                              <Select
-                                value={lessonForm.category}
-                                onValueChange={(value) =>
-                                  setLessonForm({ ...lessonForm, category: value })
-                                }
-                              >
-                                <SelectTrigger id="lessonCategory">
-                                  <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {user?.category && user?.category?.map((cat) => (
-                                    <SelectItem key={cat} value={cat}>
-                                      {cat}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <Label htmlFor="contentType">Content Type *</Label>
-                              <Select
-                                value={lessonForm.contentType}
-                                onValueChange={(value: any) =>
-                                  setLessonForm({ ...lessonForm, contentType: value })
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value={CONTENT_TYPES.VIDEO}>Video</SelectItem>
-                                  <SelectItem value={CONTENT_TYPES.PDF}>PDF</SelectItem>
-                                  <SelectItem value={CONTENT_TYPES.TEXT}>Text</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            {lessonForm.contentType === CONTENT_TYPES.VIDEO && (
-                              <div>
-                                <Label htmlFor="videoUrl">Video URL *</Label>
-                                <Input
-                                  id="videoUrl"
-                                  type="url"
-                                  value={lessonForm.videoUrl}
-                                  onChange={(e) =>
-                                    setLessonForm({
-                                      ...lessonForm,
-                                      videoUrl: e.target.value,
-                                    })
-                                  }
-                                  placeholder="https://..."
-                                  required
-                                />
-                              </div>
-                            )}
-                            {lessonForm.contentType === CONTENT_TYPES.PDF && (
-                              <div>
-                                <Label htmlFor="pdfUrl">PDF URL *</Label>
-                                <Input
-                                  id="pdfUrl"
-                                  type="url"
-                                  value={lessonForm.pdfUrl}
-                                  onChange={(e) =>
-                                    setLessonForm({
-                                      ...lessonForm,
-                                      pdfUrl: e.target.value,
-                                    })
-                                  }
-                                  placeholder="https://..."
-                                  required
-                                />
-                              </div>
-                            )}
-                            {lessonForm.contentType === CONTENT_TYPES.TEXT && (
-                              <div>
-                                <Label htmlFor="textContent">Text Content *</Label>
-                                <Textarea
-                                  id="textContent"
-                                  value={lessonForm.textContent}
-                                  onChange={(e) =>
-                                    setLessonForm({
-                                      ...lessonForm,
-                                      textContent: e.target.value,
-                                    })
-                                  }
-                                  rows={6}
-                                  required
-                                />
-                              </div>
-                            )}
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label htmlFor="lessonOrder">Order</Label>
-                                <Input
-                                  id="lessonOrder"
-                                  type="number"
-                                  value={lessonForm.order}
-                                  onChange={(e) =>
-                                    setLessonForm({
-                                      ...lessonForm,
-                                      order: parseInt(e.target.value) || 0,
-                                    })
-                                  }
-                                  placeholder="1"
-                                />
-                              </div>
-                              <div className="flex items-center space-x-2 pt-6">
-                                <input
-                                  type="checkbox"
-                                  id="isPreview"
-                                  checked={lessonForm.isPreview}
-                                  onChange={(e) =>
-                                    setLessonForm({
-                                      ...lessonForm,
-                                      isPreview: e.target.checked,
-                                    })
-                                  }
-                                  className="rounded"
-                                />
-                                <Label htmlFor="isPreview">
-                                  Preview lesson
-                                </Label>
-                              </div>
-                            </div>
-                          </div>
-                          <DialogFooter className="mt-6">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => {
-                                setNewLessonDialog(false);
-                                resetLessonForm();
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                            <Button type="submit">Create Lesson</Button>
-                          </DialogFooter>
-                        </form>
+                        <LessonForm
+                          modules={modules}
+                          courses={courses}
+                          userCategories={user?.category || []}
+                          lessonsCount={lessons.length}
+                          onSubmit={handleCreateLesson}
+                          onCancel={() => {
+                            setNewLessonDialog(false);
+                            resetLessonForm();
+                          }}
+                        />
                       </DialogContent>
                     </Dialog>
                   </div>
