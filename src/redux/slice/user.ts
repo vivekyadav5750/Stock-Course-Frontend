@@ -154,7 +154,7 @@ export const sendOTP = createAsyncThunk(
     "user/sendOTP",
     async (data: { email: string; purpose: "signup" | "forgot-password" | "change-password" }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post("/auth/send-otp", data);
+            const response = await axiosInstance.post("/otp/send", data);
 
             if (!response.data.success) {
                 return rejectWithValue(response.data.message || "Failed to send OTP");
@@ -173,7 +173,7 @@ export const verifyOTP = createAsyncThunk(
     "user/verifyOTP",
     async (data: { email: string; otp: string; purpose: "signup" | "forgot-password" | "change-password" }, { rejectWithValue }) => {
         try {
-            const response = await axiosInstance.post("/auth/verify-otp", data);
+            const response = await axiosInstance.post("/otp/verify", data);
 
             if (!response.data.success) {
                 return rejectWithValue(response.data.message || "OTP verification failed");
