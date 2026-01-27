@@ -47,7 +47,7 @@ const Login = () => {
       console.error('Login error:', error);
       
       // Check if error is due to unverified email
-      const errorMessage = error?.response?.data?.message || '';
+      const errorMessage = error || '';
       if (
         errorMessage.toLowerCase().includes('verify') ||
         errorMessage.toLowerCase().includes('blocked') ||
