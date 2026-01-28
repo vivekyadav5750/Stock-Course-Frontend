@@ -1,17 +1,29 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { MOCK_COURSES, CourseLevel } from '@/lib/constants';
+import { CourseLevel } from '@/lib/constants';
 import CourseCard from '@/components/CourseCard';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
+import { getCourse } from '@/redux/slice/course';
+import { useEffect } from 'react';
 
 const Index = () => {
+  const dispatch = useAppDispatch();
+  const { courses, status } = useAppSelector((state) => state.course);
+  const { user } = useAuth();
+
+  // Fetch courses on component mount
+  useEffect(() => {
+    dispatch(getCourse({ page: 0, limit: 100 }));
+  }, [dispatch]);
+
   // Filter to show only one course from each level
   const featuredCourses = [
-    MOCK_COURSES.find(c => c.level === CourseLevel.BEGINNER),
-    MOCK_COURSES.find(c => c.level === CourseLevel.INTERMEDIATE),
-    MOCK_COURSES.find(c => c.level === CourseLevel.ADVANCED),
+    courses.find(c => c.level?.toLowerCase() === 'beginner'),
+    courses.find(c => c.level?.toLowerCase() === 'intermediate'),
+    courses.find(c => c.level?.toLowerCase() === 'advanced'),
   ].filter(Boolean);
 
   // Animation variants
@@ -35,8 +47,6 @@ const Index = () => {
       }
     }
   };
-
-  const { user } = useAuth();
 
   return (
     <div className="min-h-screen pt-16">
@@ -93,21 +103,47 @@ const Index = () => {
             </p>
           </div>
 
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-          >
-            {featuredCourses.map((course) => (
-              course && (
-                <motion.div key={course.id} variants={itemVariants}>
-                  <CourseCard course={course} />
+          {/* Loading State */}
+          {status === 'loading' && (
+            <div className="flex justify-center items-center py-12">
+              <p className="text-muted-foreground">Loading featured courses...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {status === 'failed' && (
+            <div className="text-center py-8">
+              <p className="text-destructive mb-4">Failed to load featured courses</p>
+              <Button onClick={() => dispatch(getCourse({ page: 0, limit: 100 }))}>
+                Try Again
+              </Button>
+            </div>
+          )}
+
+          {/* Featured Courses Grid */}
+          {status === 'success' && (
+            <>
+              {featuredCourses.length > 0 ? (
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-100px" }}
+                  className="grid grid-cols-1 md:grid-cols-3 gap-8"
+                >
+                  {featuredCourses.map((course) => (
+                    course && (
+                      <motion.div key={(course as any)._id || (course as any).id} variants={itemVariants}>
+                        <CourseCard course={course} />
+                      </motion.div>
+                    )
+                  ))}
                 </motion.div>
-              )
-            ))}
-          </motion.div>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">No courses available</p>
+              )}
+            </>
+          )}
 
           <div className="text-center mt-12">
             <Link to="/courses">
