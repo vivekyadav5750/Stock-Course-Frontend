@@ -50,7 +50,6 @@ const Login = () => {
       const errorMessage = error || '';
       if (
         errorMessage.toLowerCase().includes('verify') ||
-        errorMessage.toLowerCase().includes('blocked') ||
         errorMessage.toLowerCase().includes('not verified')
       ) {
         setError('Your email is not verified. Please verify to continue.');
