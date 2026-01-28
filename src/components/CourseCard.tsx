@@ -26,7 +26,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       transition={{ type: "spring", stiffness: 300, damping: 15 }}
     >
       <Link to={`/course/${course._id}`} className="block h-full">
-        <Card className="h-full overflow-hidden border group hover:shadow-md transition-all duration-300">
+        <Card className="h-[420px] flex flex-col overflow-hidden border group hover:shadow-md transition-all duration-300">
           <div className="aspect-video relative overflow-hidden">
             <img
               src={ course?.thumbnail || 'https://via.placeholder.com/400x300'}
@@ -39,15 +39,15 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
               </Badge>
             </div>
           </div>
-          <CardHeader className="pb-2">
-            <h3 className="text-xl font-semibold tracking-tight">{course.title}</h3>
+          <CardHeader className="pb-2 min-h-[64px]">
+            <h3 className="text-xl line-clamp-1 font-semibold tracking-tight">{course.title}</h3>
           </CardHeader>
-          <CardContent className="pb-4">
+          <CardContent className="pb-4 min-h-[48px]">
             <p className="text-muted-foreground text-sm line-clamp-2">
               {course.description}
             </p>
           </CardContent>
-          <CardFooter className="pt-0 flex justify-between items-center">
+          <CardFooter className="mt-auto pt-0 flex justify-between items-center">
             <div className="text-sm text-muted-foreground">
               {((course as any).topics?.length || 0)} topics
             </div>
