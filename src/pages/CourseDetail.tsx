@@ -1,25 +1,36 @@
-
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { Course_Types } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import TopicItem from '@/components/TopicItem';
-import { toast } from 'sonner';
-import { motion } from 'framer-motion';
-import { useAppDispatch, useAppSelector } from '@/redux/hook';
-import { getCourseById } from '@/redux/slice/course';
+import React, { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Course_Types } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import TopicItem from "@/components/TopicItem";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
+import { useAppDispatch, useAppSelector } from "@/redux/hook";
+import { getCourseById } from "@/redux/slice/course";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
   const [activeVideo, setActiveVideo] = useState<any | null>(null);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [openModuleId, setOpenModuleId] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { currentCourse: course, status, message } = useAppSelector((state) => state.course);
+  const {
+    currentCourse: course,
+    status,
+    message,
+  } = useAppSelector((state) => state.course);
 
   // Fetch course data
   useEffect(() => {
@@ -27,37 +38,37 @@ const CourseDetail = () => {
       dispatch(getCourseById(id));
     }
   }, [id, dispatch]);
-  
+
   // Function to check if user can access this course
   // For now, let's make Basic course free and others paid
   const canAccessCourse = () => {
     if (!course) return false;
-    
+
     // If user is not logged in and course is not free, redirect to login
     if (!user && course.price > 0) {
       return false;
     }
-    
+
     // For simplicity, let's allow access to all courses when logged in (in a real app, would check payment status)
     return true;
   };
-  
+
   const handleBuyNow = () => {
     if (!user) {
-      toast.info('Please log in to purchase this course');
-      navigate('/login');
+      toast.info("Please log in to purchase this course");
+      navigate("/login");
       return;
     }
-    
-    toast.success('Purchase functionality coming soon!');
+
+    toast.success("Purchase functionality coming soon!");
   };
-  
+
   const handlePlayVideo = (topic: any) => {
     setActiveVideo(topic);
     setVideoModalOpen(true);
   };
 
-  if (status === 'loading') {
+  if (status === "loading") {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
         <div className="animate-pulse text-lg">Loading course...</div>
@@ -65,11 +76,14 @@ const CourseDetail = () => {
     );
   }
 
-  if (status === 'failed' || !course) {
+  if (status === "failed" || !course) {
     return (
       <div className="min-h-screen pt-24 flex flex-col items-center justify-center">
         <h2 className="text-2xl font-bold mb-4">Course Not Found</h2>
-        <p className="text-muted-foreground mb-6">{message || "The course you're looking for doesn't exist or has been removed."}</p>
+        <p className="text-muted-foreground mb-6">
+          {message ||
+            "The course you're looking for doesn't exist or has been removed."}
+        </p>
         <Link to="/courses">
           <Button>Browse All Courses</Button>
         </Link>
@@ -88,14 +102,14 @@ const CourseDetail = () => {
           <div className="mb-8">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <Badge variant="outline" className="rounded-full">
-                {course.level || 'Basic'}
+                {course.level || "Basic"}
               </Badge>
               <Badge variant="secondary" className="rounded-full">
-                {((course as any).modules?.length || (course as any).topics?.length || 0)} Topics
+                {(course as any).modules?.length || 0} Modules
               </Badge>
             </div>
-            
-            <motion.h1 
+
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -103,8 +117,8 @@ const CourseDetail = () => {
             >
               {course.title}
             </motion.h1>
-            
-            <motion.p 
+
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -112,104 +126,125 @@ const CourseDetail = () => {
             >
               {course.description}
             </motion.p>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex flex-wrap items-center gap-4 mb-8"
-            >
-              {course.price === 0 ? (
-                <div className="text-xl font-bold text-green-600">Free</div>
-              ) : (
-                <div className="text-xl font-bold">₹{course.price}</div>
-              )}
-              
+
+            <div className="flex items-center gap-4 mb-8">
+              <div className="text-xl font-bold">
+                {course.price === 0 ? "Free" : `₹${course.price}`}
+              </div>
+
               {!canAccessCourse() && (
                 <Button onClick={handleBuyNow} size="lg">
-                  {course.price === 0 ? 'Enroll Now' : 'Buy Now'}
+                  Buy Now
                 </Button>
               )}
-              
+
               {canAccessCourse() && (
-                <Button 
-                  onClick={() => handlePlayVideo((course as any).topics?.[0] || (course as any).modules?.[0])} 
+                <Button
+                  onClick={() =>
+                    handlePlayVideo((course as any).modules?.[0]?.lessons?.[0])
+                  }
                   size="lg"
                 >
                   Start Learning
                 </Button>
               )}
-            </motion.div>
+            </div>
           </div>
-          
+
           {/* Course Image */}
           <div className="mb-10">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="rounded-lg overflow-hidden"
-            >
-              <img 
-                src={(course as any).imageUrl || (course as any).thumbnail || 'https://via.placeholder.com/800x450'} 
-                alt={course.title} 
-                className="w-full h-auto object-cover aspect-video" 
-              />
-            </motion.div>
+            <img
+              src={
+                (course as any).thumbnail ||
+                "https://via.placeholder.com/800x450"
+              }
+              alt={course.title}
+              className="w-full rounded-lg aspect-video object-cover"
+            />
           </div>
-          
-          {/* Topics List */}
+
+          {/* Course Content */}
           <div className="mb-12">
-            <motion.h2 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="text-2xl font-bold mb-6"
-            >
-              Course Content
-            </motion.h2>
-            
-            <div className="space-y-2">
-              {((course as any).topics || (course as any).modules || []).map((topic: any, index: number) => (
-                <TopicItem 
-                  key={topic.id || topic._id}
-                  topic={topic}
-                  index={index}
-                  isUnlocked={canAccessCourse()}
-                  onPlayVideo={handlePlayVideo}
-                />
-              ))}
+            <h2 className="text-2xl font-bold mb-6">Course Content</h2>
+
+            <div className="space-y-3">
+              {(course as any).modules?.map(
+                (module: any, moduleIndex: number) => {
+                  const isOpen = openModuleId === module._id;
+
+                  return (
+                    <div
+                      key={module._id}
+                      className="border rounded-lg overflow-hidden"
+                    >
+                      {/* Module Header */}
+                      <button
+                        onClick={() =>
+                          setOpenModuleId(isOpen ? null : module._id)
+                        }
+                        className="w-full flex justify-between items-center px-4 py-3 bg-secondary/30 hover:bg-secondary transition"
+                      >
+                        <div className="text-left">
+                          <p className="font-semibold">
+                            Module {moduleIndex + 1}: {module.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {module.lessons?.length || 0} lessons
+                          </p>
+                        </div>
+                        <ChevronDown
+                          className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+                            isOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {/* Lessons */}
+                      {isOpen && (
+                        <div className="divide-y">
+                          {module.lessons?.length > 0 ? (
+                            module.lessons.map(
+                              (lesson: any, lessonIndex: number) => (
+                                <TopicItem
+                                  key={lesson._id}
+                                  topic={lesson}
+                                  index={lessonIndex}
+                                  isUnlocked={
+                                    lesson.isPreview || canAccessCourse()
+                                  }
+                                  onPlayVideo={handlePlayVideo}
+                                />
+                              ),
+                            )
+                          ) : (
+                            <p className="px-4 py-3 text-sm text-muted-foreground">
+                              No lessons available
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                },
+              )}
             </div>
           </div>
-          
-          {!canAccessCourse() && (
-            <div className="text-center p-6 bg-secondary/30 rounded-lg">
-              <h3 className="text-xl font-semibold mb-3">Ready to start learning?</h3>
-              <p className="text-muted-foreground mb-4">
-                Unlock this course to get access to all topics and materials.
-              </p>
-              <Button onClick={handleBuyNow} size="lg">
-                {course.price === 0 ? 'Enroll Now' : 'Buy Now'}
-              </Button>
-            </div>
-          )}
         </div>
       </div>
-      
+
       {/* Video Modal */}
       <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
         <DialogContent className="max-w-4xl w-full p-0 bg-black">
           <DialogHeader className="p-4">
-            <DialogTitle className="text-white">{activeVideo?.title}</DialogTitle>
+            <DialogTitle className="text-white">
+              {activeVideo?.title}
+            </DialogTitle>
             <DialogDescription className="text-white/70">
               {activeVideo?.description}
             </DialogDescription>
           </DialogHeader>
-          <div className="aspect-video bg-black flex items-center justify-center">
-            <div className="text-white/80 text-center p-8">
-              <p className="text-lg mb-4">Video player would be integrated here</p>
-              <p className="text-sm">In production, this would use secure HLS streaming with DRM protection</p>
-            </div>
+          <div className="aspect-video flex items-center justify-center text-white/80">
+            Video player here
           </div>
         </DialogContent>
       </Dialog>
