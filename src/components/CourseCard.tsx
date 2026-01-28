@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Course, CourseLevel } from '@/lib/constants';
+import { CourseLevel } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { Course_Types } from '@/types';
 
 interface CourseCardProps {
-  course: Course | Course_Types;
+  course: Course_Types;
 }
 
 const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
@@ -26,11 +26,11 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       whileHover={{ y: -5 }}
       transition={{ type: "spring", stiffness: 300, damping: 15 }}
     >
-      <Link to={`/course/${(course as any)._id || (course as any).id}`} className="block h-full">
+      <Link to={`/course/${(course as any)._id}`} className="block h-full">
         <Card className="h-full overflow-hidden border group hover:shadow-md transition-all duration-300">
           <div className="aspect-video relative overflow-hidden">
             <img
-              src={(course as any).imageUrl || (course as any).thumbnail || 'https://via.placeholder.com/400x300'}
+              src={ course?.thumbnail || 'https://via.placeholder.com/400x300'}
               alt={course.title}
               className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
             />
