@@ -2,36 +2,31 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { MOCK_COURSES, Course, Topic } from '@/lib/constants';
+import { Course_Types } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import TopicItem from '@/components/TopicItem';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
+import { getCourseById } from '@/redux/slice/course';
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [course, setCourse] = useState<Course | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeVideo, setActiveVideo] = useState<Topic | null>(null);
+  const dispatch = useAppDispatch();
+  const [activeVideo, setActiveVideo] = useState<any | null>(null);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { currentCourse: course, status, message } = useAppSelector((state) => state.course);
 
-  // Get course data
+  // Fetch course data
   useEffect(() => {
-    const fetchCourse = async () => {
-      // Simulate API call with delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const foundCourse = MOCK_COURSES.find(c => c.id === id);
-      setCourse(foundCourse || null);
-      setLoading(false);
-    };
-    
-    fetchCourse();
-  }, [id]);
+    if (id) {
+      dispatch(getCourseById(id));
+    }
+  }, [id, dispatch]);
   
   // Function to check if user can access this course
   // For now, let's make Basic course free and others paid
@@ -57,12 +52,12 @@ const CourseDetail = () => {
     toast.success('Purchase functionality coming soon!');
   };
   
-  const handlePlayVideo = (topic: Topic) => {
+  const handlePlayVideo = (topic: any) => {
     setActiveVideo(topic);
     setVideoModalOpen(true);
   };
 
-  if (loading) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
         <div className="animate-pulse text-lg">Loading course...</div>
@@ -70,11 +65,11 @@ const CourseDetail = () => {
     );
   }
 
-  if (!course) {
+  if (status === 'failed' || !course) {
     return (
       <div className="min-h-screen pt-24 flex flex-col items-center justify-center">
         <h2 className="text-2xl font-bold mb-4">Course Not Found</h2>
-        <p className="text-muted-foreground mb-6">The course you're looking for doesn't exist or has been removed.</p>
+        <p className="text-muted-foreground mb-6">{message || "The course you're looking for doesn't exist or has been removed."}</p>
         <Link to="/courses">
           <Button>Browse All Courses</Button>
         </Link>
@@ -93,13 +88,10 @@ const CourseDetail = () => {
           <div className="mb-8">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <Badge variant="outline" className="rounded-full">
-                {course.level}
+                {course.level || 'Basic'}
               </Badge>
               <Badge variant="secondary" className="rounded-full">
-                {course.topics.length} Topics
-              </Badge>
-              <Badge variant="secondary" className="rounded-full">
-                {Math.round(course.topics.reduce((total, topic) => total + topic.duration, 0) / 60)} Hours
+                {((course as any).modules?.length || (course as any).topics?.length || 0)} Topics
               </Badge>
             </div>
             
@@ -127,21 +119,21 @@ const CourseDetail = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="flex flex-wrap items-center gap-4 mb-8"
             >
-              {isCourseFree ? (
+              {course.price === 0 ? (
                 <div className="text-xl font-bold text-green-600">Free</div>
               ) : (
                 <div className="text-xl font-bold">₹{course.price}</div>
               )}
               
-              {!hasAccess && (
+              {!canAccessCourse() && (
                 <Button onClick={handleBuyNow} size="lg">
-                  {isCourseFree ? 'Enroll Now' : 'Buy Now'}
+                  {course.price === 0 ? 'Enroll Now' : 'Buy Now'}
                 </Button>
               )}
               
-              {hasAccess && (
+              {canAccessCourse() && (
                 <Button 
-                  onClick={() => handlePlayVideo(course.topics[0])} 
+                  onClick={() => handlePlayVideo((course as any).topics?.[0] || (course as any).modules?.[0])} 
                   size="lg"
                 >
                   Start Learning
@@ -159,7 +151,7 @@ const CourseDetail = () => {
               className="rounded-lg overflow-hidden"
             >
               <img 
-                src={course.imageUrl} 
+                src={(course as any).imageUrl || (course as any).thumbnail || 'https://via.placeholder.com/800x450'} 
                 alt={course.title} 
                 className="w-full h-auto object-cover aspect-video" 
               />
@@ -178,26 +170,26 @@ const CourseDetail = () => {
             </motion.h2>
             
             <div className="space-y-2">
-              {course.topics.map((topic, index) => (
+              {((course as any).topics || (course as any).modules || []).map((topic: any, index: number) => (
                 <TopicItem 
-                  key={topic.id}
+                  key={topic.id || topic._id}
                   topic={topic}
                   index={index}
-                  isUnlocked={hasAccess}
+                  isUnlocked={canAccessCourse()}
                   onPlayVideo={handlePlayVideo}
                 />
               ))}
             </div>
           </div>
           
-          {!hasAccess && (
+          {!canAccessCourse() && (
             <div className="text-center p-6 bg-secondary/30 rounded-lg">
               <h3 className="text-xl font-semibold mb-3">Ready to start learning?</h3>
               <p className="text-muted-foreground mb-4">
                 Unlock this course to get access to all topics and materials.
               </p>
               <Button onClick={handleBuyNow} size="lg">
-                {isCourseFree ? 'Enroll Now' : 'Buy Now'}
+                {course.price === 0 ? 'Enroll Now' : 'Buy Now'}
               </Button>
             </div>
           )}

@@ -108,23 +108,23 @@ export const getCourse = createAsyncThunk(
 );
 
 // Get single course by ID
-// export const getCourseById = createAsyncThunk(
-//   "course/getById",
-//   async (courseId: string, { rejectWithValue }) => {
-//     try {
-//       const response = await axiosInstance.get(`/course/${courseId}`);
+export const getCourseById = createAsyncThunk(
+  "course/getById",
+  async (courseId: string, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/course/${courseId}`);
 
-//       if (!response.data.success) {
-//         return rejectWithValue(response.data.message || "Failed to fetch course");
-//       }
+      if (!response.data.success) {
+        return rejectWithValue(response.data.message || "Failed to fetch course");
+      }
 
-//       return response.data.data;
-//     } catch (error: any) {
-//       const message = getErrorMessage(error, "Failed to fetch course");
-//       return rejectWithValue(message);
-//     }
-//   }
-// );
+      return response.data.data;
+    } catch (error: any) {
+      const message = getErrorMessage(error, "Failed to fetch course");
+      return rejectWithValue(message);
+    }
+  }
+);
 
 // Create new course (admin)
 export const createCourse = createAsyncThunk(
@@ -286,18 +286,18 @@ const courseSlice = createSlice({
       })
 
       // Get Course By ID
-      // .addCase(getCourseById.pending, (state) => {
-      //   state.status = "loading";
-      //   state.message = "";
-      // })
-      // .addCase(getCourseById.fulfilled, (state, action) => {
-      //   state.status = "success";
-      //   state.currentCourse = action.payload;
-      // })
-      // .addCase(getCourseById.rejected, (state, action) => {
-      //   state.status = "failed";
-      //   state.message = action.payload as string;
-      // })
+      .addCase(getCourseById.pending, (state) => {
+        state.status = "loading";
+        state.message = "";
+      })
+      .addCase(getCourseById.fulfilled, (state, action) => {
+        state.status = "success";
+        state.currentCourse = action.payload;
+      })
+      .addCase(getCourseById.rejected, (state, action) => {
+        state.status = "failed";
+        state.message = action.payload as string;
+      })
 
       // Create Course
       .addCase(createCourse.pending, (state) => {
