@@ -1,7 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { CourseLevel } from '@/lib/constants';
+// import { CourseLevel } from '@/lib/constants';
 import CourseCard from '@/components/CourseCard';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';

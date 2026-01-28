@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { CourseLevel } from '@/lib/constants';
+// import { CourseLevel } from '@/lib/constants';?
 import CourseCard from '@/components/CourseCard';
 import { Button } from '@/components/ui/button';
 import { TabsContent, Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -112,7 +112,7 @@ const Courses = () => {
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                       >
                         {filteredCourses.map(course => (
-                          <motion.div key={course._id || course.id} variants={itemVariants}>
+                          <motion.div key={course.id} variants={itemVariants}>
                             <CourseCard course={course} />
                           </motion.div>
                         ))}
@@ -131,7 +131,7 @@ const Courses = () => {
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                       >
                         {filteredCourses.map(course => (
-                          <motion.div key={course._id || course.id} variants={itemVariants}>
+                          <motion.div key={course.id} variants={itemVariants}>
                             <CourseCard course={course} />
                           </motion.div>
                         ))}
@@ -150,7 +150,7 @@ const Courses = () => {
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                       >
                         {filteredCourses.map(course => (
-                          <motion.div key={course._id || course.id} variants={itemVariants}>
+                          <motion.div key={course.id} variants={itemVariants}>
                             <CourseCard course={course} />
                           </motion.div>
                         ))}
@@ -169,7 +169,7 @@ const Courses = () => {
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                       >
                         {filteredCourses.map(course => (
-                          <motion.div key={course._id || course.id} variants={itemVariants}>
+                          <motion.div key={course.id} variants={itemVariants}>
                             <CourseCard course={course} />
                           </motion.div>
                         ))}

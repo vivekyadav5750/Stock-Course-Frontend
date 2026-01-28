@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CourseLevel } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { motion } from 'framer-motion';
@@ -13,11 +12,11 @@ interface CourseCardProps {
 
 const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
   // Choose badge color based on course level
-  const getBadgeVariant = (level: string | CourseLevel | undefined) => {
+  const getBadgeVariant = (level: string | undefined) => {
     const levelStr = String(level || '').toLowerCase();
-    if (levelStr === 'beginner' || level === CourseLevel.BEGINNER) return 'secondary';
-    if (levelStr === 'intermediate' || level === CourseLevel.INTERMEDIATE) return 'default';
-    if (levelStr === 'advanced' || level === CourseLevel.ADVANCED) return 'destructive';
+    if (levelStr === 'beginner') return 'secondary';
+    if (levelStr === 'intermediate') return 'default';
+    if (levelStr === 'advanced') return 'destructive';
     return 'outline';
   };
 
@@ -26,7 +25,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       whileHover={{ y: -5 }}
       transition={{ type: "spring", stiffness: 300, damping: 15 }}
     >
-      <Link to={`/course/${(course as any)._id}`} className="block h-full">
+      <Link to={`/course/${course._id}`} className="block h-full">
         <Card className="h-full overflow-hidden border group hover:shadow-md transition-all duration-300">
           <div className="aspect-video relative overflow-hidden">
             <img
