@@ -16,6 +16,7 @@ export type User = {
     isVerified?: boolean;
     isBlocked?: boolean;
     courses?: Course_Types[];
+    purchasedCourses?: Course_Types[];
     transactions?: string[];
     createdAt?: string;
     updatedAt?: string;

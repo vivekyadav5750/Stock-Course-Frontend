@@ -49,7 +49,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
           </CardContent>
           <CardFooter className="mt-auto pt-0 flex justify-between items-center">
             <div className="text-sm text-muted-foreground">
-              {((course as any).topics?.length || 0)} topics
+              {((course as any).totalModules || 0)} topics
             </div>
             <p className="font-semibold">
               ₹{course.price}

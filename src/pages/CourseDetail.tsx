@@ -52,7 +52,7 @@ const CourseDetail = () => {
     // For simplicity, let's allow access to all courses when logged in (in a real app, would check payment status)
     // we have to check is course is in user?.courses array
     if (user && course.price > 0) {
-      const hasCourse = user.courses?.some(
+      const hasCourse = user.purchasedCourses?.some(
         (userCourse) => userCourse._id === course._id
       );
       return hasCourse;
