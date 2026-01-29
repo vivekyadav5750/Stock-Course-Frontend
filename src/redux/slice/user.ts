@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance, { setAccessToken } from "@/lib/axios";
 import { getErrorMessage } from "@/lib/utils";
+import { Course_Types } from "@/types";
 
 export type User = {
     _id?: string;
@@ -14,7 +15,7 @@ export type User = {
     isSuperAdmin?: boolean;
     isVerified?: boolean;
     isBlocked?: boolean;
-    courses?: string[];
+    courses?: Course_Types[];
     transactions?: string[];
     createdAt?: string;
     updatedAt?: string;
@@ -52,7 +53,7 @@ const initialState: UserState = {
     message: "",
     isAuthenticated: false,
     // categories: [],
-};  
+};
 
 export const userLogin = createAsyncThunk(
     "user/login",
