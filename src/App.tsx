@@ -16,6 +16,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
+import Purchase from "./pages/Purchase";
 import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ChangePassword from "./pages/ChangePassword";
@@ -87,6 +88,14 @@ const AppContent = () => {
           <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="courses" element={<Courses />} />
           <Route path="course/:id" element={<CourseDetail />} />
+          <Route 
+            path="purchase/:id" 
+            element={
+              <ProtectedRoute>
+                <Purchase />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="profile" 
             element={
