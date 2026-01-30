@@ -28,6 +28,7 @@ export const useAuth = () => {
     const login = async (email: string, password: string) => {
         try {
             const result = await dispatch(userLogin({ email, password })).unwrap();
+            await dispatch(getUser()).unwrap(); // fetch user data
             toast.success('Logged in successfully');
             return result;
         } catch (error: any) {

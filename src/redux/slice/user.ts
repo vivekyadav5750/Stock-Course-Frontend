@@ -274,7 +274,7 @@ const userSlice = createSlice({
             })
             .addCase(userLogin.fulfilled, (state, action) => {
                 state.status = "success";
-                state.user = action.payload?.user || null;
+                // state.user = action.payload?.user || null;
                 state.isAuthenticated = true;
                 state.message = "Logged in successfully";
             })
