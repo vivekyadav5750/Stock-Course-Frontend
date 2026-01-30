@@ -26,13 +26,14 @@ interface Course {
 interface ModuleFormProps {
   module?: Module | null;
   courses: Course[];
+  selectedCourse?: Course | null;
   userCategories: string[];
   modulesCount: number;
   onSubmit: (formData: any) => void;
   onCancel: () => void;
 }
 
-export const ModuleForm = ({ module, courses, userCategories, modulesCount, onSubmit, onCancel }: ModuleFormProps) => {
+export const ModuleForm = ({ module, courses,selectedCourse, userCategories, modulesCount, onSubmit, onCancel }: ModuleFormProps) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -52,6 +53,19 @@ export const ModuleForm = ({ module, courses, userCategories, modulesCount, onSu
       });
     }
   }, [module]);
+
+  useEffect(() => {
+  if (selectedCourse) {
+    const courseId = selectedCourse.id || selectedCourse._id || '';
+
+    setFormData((prev) => ({
+      ...prev,
+      courseId,
+      category: selectedCourse.category || '',
+    }));
+  }
+}, [selectedCourse]);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
