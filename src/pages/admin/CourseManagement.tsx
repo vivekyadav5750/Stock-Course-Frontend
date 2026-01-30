@@ -1,20 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { getAllCourses, createCourse, updateCourse, deleteCourse, togglePublishCourse } from '@/redux/slice/course';
-import { getAllModules, createModule, updateModule, deleteModule, togglePublishModule } from '@/redux/slice/module';
-import { getAllLessons, createLesson, updateLesson, deleteLesson, togglePublishLesson } from '@/redux/slice/lesson';
-import type { Module } from '@/redux/slice/module';
-import type { Lesson, CreateLessonData as LessonCreateData } from '@/redux/slice/lesson';
-import { CONTENT_TYPES, Course_Types } from '@/types';
-import { CourseForm } from '@/components/CourseForm';
-import { ModuleForm } from '@/components/ModuleForm';
-import { LessonForm } from '@/components/LessonForm';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import {
+  getAllCourses,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  togglePublishCourse,
+} from "@/redux/slice/course";
+import {
+  getAllModules,
+  createModule,
+  updateModule,
+  deleteModule,
+  togglePublishModule,
+} from "@/redux/slice/module";
+import {
+  getAllLessons,
+  createLesson,
+  updateLesson,
+  deleteLesson,
+  togglePublishLesson,
+} from "@/redux/slice/lesson";
+import type { Module } from "@/redux/slice/module";
+import type {
+  Lesson,
+  CreateLessonData as LessonCreateData,
+} from "@/redux/slice/lesson";
+import { CONTENT_TYPES, Course_Types } from "@/types";
+import { CourseForm } from "@/components/CourseForm";
+import { ModuleForm } from "@/components/ModuleForm";
+import { LessonForm } from "@/components/LessonForm";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -22,7 +43,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -31,18 +52,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import { motion } from 'framer-motion';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { motion } from "framer-motion";
 import {
   Plus,
   Edit,
@@ -52,7 +73,7 @@ import {
   BookOpen,
   Video,
   FileText,
-} from 'lucide-react';
+} from "lucide-react";
 
 const CourseManagement = () => {
   const { user } = useAuth();
@@ -60,12 +81,20 @@ const CourseManagement = () => {
   const dispatch = useAppDispatch();
 
   // Redux state
-  const { courses, status: courseStatus } = useAppSelector((state) => state.course);
-  const { modules, status: moduleStatus } = useAppSelector((state) => state.module);
-  const { lessons, status: lessonStatus } = useAppSelector((state) => state.lesson);
+  const { courses, status: courseStatus } = useAppSelector(
+    (state) => state.course,
+  );
+  const { modules, status: moduleStatus } = useAppSelector(
+    (state) => state.module,
+  );
+  const { lessons, status: lessonStatus } = useAppSelector(
+    (state) => state.lesson,
+  );
 
   // Local state
-  const [selectedCourse, setSelectedCourse] = useState<Course_Types | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<Course_Types | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // Dialog states
@@ -77,41 +106,48 @@ const CourseManagement = () => {
   const [editLessonDialog, setEditLessonDialog] = useState(false);
 
   // Filter states
-  const [courseFilter, setCourseFilter] = useState({ category: '' });
-  const [moduleFilter, setModuleFilter] = useState({ courseId: '', category: '' });
-  const [lessonFilter, setLessonFilter] = useState({ courseId: '', moduleId: '', category: '' });
+  const [courseFilter, setCourseFilter] = useState({ category: "" });
+  const [moduleFilter, setModuleFilter] = useState({
+    courseId: "",
+    category: "",
+  });
+  const [lessonFilter, setLessonFilter] = useState({
+    courseId: "",
+    moduleId: "",
+    category: "",
+  });
 
   // Form states for course
   const [courseForm, setCourseForm] = useState<any>({
-    title: '',
-    description: '',
-    category: '',
-    level: 'Beginner' as 'Beginner' | 'Intermediate' | 'Advanced',
-    price: '',
+    title: "",
+    description: "",
+    category: "",
+    level: "Beginner" as "Beginner" | "Intermediate" | "Advanced",
+    price: "",
     duration: 0,
-    thumbnail: '',
+    thumbnail: "",
   });
 
   // Form states for module
   const [moduleForm, setModuleForm] = useState<any>({
-    title: '',
-    description: '',
-    category: '',
-    courseId: '',
-    order: '',
+    title: "",
+    description: "",
+    category: "",
+    courseId: "",
+    order: "",
   });
 
   // Form states for lesson
   const [lessonForm, setLessonForm] = useState<any>({
-    moduleId: '',
-    courseId: '',
-    title: '',
-    description: '',
-    category: '',
-    contentType: 'video' as 'video' | 'pdf' | 'text',
-    videoUrl: '',
-    pdfUrl: '',
-    textContent: '',
+    moduleId: "",
+    courseId: "",
+    title: "",
+    description: "",
+    category: "",
+    contentType: "video" as "video" | "pdf" | "text",
+    videoUrl: "",
+    pdfUrl: "",
+    textContent: "",
     duration: 0,
     order: 0,
     isPreview: false,
@@ -121,8 +157,8 @@ const CourseManagement = () => {
   // Check admin permission and set initial filters
   useEffect(() => {
     if (user && !user.isAdmin) {
-      toast.error('You do not have permission to access this page');
-      navigate('/');
+      toast.error("You do not have permission to access this page");
+      navigate("/");
       return;
     }
 
@@ -130,8 +166,8 @@ const CourseManagement = () => {
     if (user?.category && user?.category?.length > 0) {
       const firstCategory = user?.category[0];
       setCourseFilter({ category: firstCategory });
-      setModuleFilter({ courseId: '', category: firstCategory });
-      setLessonFilter({ courseId: '', moduleId: '', category: firstCategory });
+      setModuleFilter({ courseId: "", category: firstCategory });
+      setLessonFilter({ courseId: "", moduleId: "", category: firstCategory });
     } else if (user) {
       // If user is loaded but has no categories, stop loading
       setIsLoading(false);
@@ -145,12 +181,14 @@ const CourseManagement = () => {
 
       try {
         setIsLoading(true);
-        await dispatch(getAllCourses({
-          category: courseFilter.category || undefined
-        })).unwrap();
+        await dispatch(
+          getAllCourses({
+            category: courseFilter.category || undefined,
+          }),
+        ).unwrap();
       } catch (error: any) {
-        console.error('Error fetching courses:', error);
-        toast.error('Failed to load courses');
+        console.error("Error fetching courses:", error);
+        toast.error("Failed to load courses");
       } finally {
         setIsLoading(false);
       }
@@ -167,13 +205,15 @@ const CourseManagement = () => {
       if (!user?.isAdmin) return;
 
       try {
-        await dispatch(getAllModules({
-          courseId: moduleFilter.courseId || undefined,
-          category: moduleFilter.category || undefined,
-        })).unwrap();
+        await dispatch(
+          getAllModules({
+            courseId: moduleFilter.courseId || undefined,
+            category: moduleFilter.category || undefined,
+          }),
+        ).unwrap();
       } catch (error: any) {
-        console.error('Error fetching modules:', error);
-        toast.error('Failed to load modules');
+        console.error("Error fetching modules:", error);
+        toast.error("Failed to load modules");
       }
     };
 
@@ -188,44 +228,75 @@ const CourseManagement = () => {
       if (!user?.isAdmin) return;
 
       try {
-        await dispatch(getAllLessons({
-          courseId: lessonFilter.courseId || undefined,
-          moduleId: lessonFilter.moduleId || undefined,
-          category: lessonFilter.category || undefined,
-        })).unwrap();
+        await dispatch(
+          getAllLessons({
+            courseId: lessonFilter.courseId || undefined,
+            moduleId: lessonFilter.moduleId || undefined,
+            category: lessonFilter.category || undefined,
+          }),
+        ).unwrap();
       } catch (error: any) {
-        console.error('Error fetching lessons:', error);
-        toast.error('Failed to load lessons');
+        console.error("Error fetching lessons:", error);
+        toast.error("Failed to load lessons");
       }
     };
 
     if (lessonFilter.category) {
       fetchLessons();
     }
-  }, [user?.isAdmin, lessonFilter.courseId, lessonFilter.moduleId, lessonFilter.category, dispatch]);
+  }, [
+    user?.isAdmin,
+    lessonFilter.courseId,
+    lessonFilter.moduleId,
+    lessonFilter.category,
+    dispatch,
+  ]);
+
+  //Handle selected course
+
+  const handleCourseSelect = (course: Course_Types) => {
+    const courseId = course.id ?? course._id;
+
+    if (!courseId) return;
+
+    setSelectedCourse(course);
+
+    setModuleFilter((prev) => ({
+      ...prev,
+      courseId,
+    }));
+
+    setLessonFilter((prev) => ({
+      ...prev,
+      courseId,
+      moduleId: "",
+    }));
+  };
 
   // Handle create course
   const handleCreateCourse = async (formData: any) => {
     if (!formData.title || !formData.description) {
-      toast.error('Please fill in required fields');
+      toast.error("Please fill in required fields");
       return;
     }
 
     try {
-      await dispatch(createCourse({
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        level: formData.level,
-        price: parseFloat(formData.price) || 0,
-        thumbnail: formData.thumbnail,
-      })).unwrap();
+      await dispatch(
+        createCourse({
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          level: formData.level,
+          price: parseFloat(formData.price) || 0,
+          thumbnail: formData.thumbnail,
+        }),
+      ).unwrap();
 
       setNewCourseDialog(false);
       resetCourseForm();
-      toast.success('Course created successfully');
+      toast.success("Course created successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to create course');
+      toast.error(error || "Failed to create course");
     }
   };
 
@@ -239,38 +310,40 @@ const CourseManagement = () => {
       const courseId = selectedCourse.id || selectedCourse._id;
       if (!courseId) return;
 
-      const updatedCourse = await dispatch(updateCourse({
-        courseId: courseId,
-        data: {
-          title: courseForm.title,
-          description: courseForm.description,
-          category: courseForm.category,
-          level: courseForm.level,
-          price: parseFloat(courseForm.price) || 0,
-          thumbnail: courseForm.thumbnail,
-        },
-      })).unwrap();
+      const updatedCourse = await dispatch(
+        updateCourse({
+          courseId: courseId,
+          data: {
+            title: courseForm.title,
+            description: courseForm.description,
+            category: courseForm.category,
+            level: courseForm.level,
+            price: parseFloat(courseForm.price) || 0,
+            thumbnail: courseForm.thumbnail,
+          },
+        }),
+      ).unwrap();
 
       setEditCourseDialog(false);
       setSelectedCourse(updatedCourse);
-      toast.success('Course updated successfully');
+      toast.success("Course updated successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to update course');
+      toast.error(error || "Failed to update course");
     }
   };
 
   // Handle delete course
   const handleDeleteCourse = async (courseId: string) => {
-    if (!confirm('Are you sure you want to delete this course?')) return;
+    if (!confirm("Are you sure you want to delete this course?")) return;
 
     try {
       await dispatch(deleteCourse(courseId)).unwrap();
       if (selectedCourse?.id === courseId || selectedCourse?._id === courseId) {
         setSelectedCourse(null);
       }
-      toast.success('Course deleted successfully');
+      toast.success("Course deleted successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to delete course');
+      toast.error(error || "Failed to delete course");
     }
   };
 
@@ -278,39 +351,41 @@ const CourseManagement = () => {
   const handleTogglePublishCourse = async (courseId: string) => {
     try {
       await dispatch(togglePublishCourse(courseId)).unwrap();
-      toast.success('Course publish status toggled successfully');
+      toast.success("Course publish status toggled successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to toggle publish status');
+      toast.error(error || "Failed to toggle publish status");
     }
   };
 
   // Handle create module
   const handleCreateModule = async (formData: any) => {
     if (!formData.title || !formData.category) {
-      toast.error('Please fill in required fields');
+      toast.error("Please fill in required fields");
       return;
     }
 
     try {
       const courseId = formData.courseId;
       if (!courseId) {
-        toast.error('Please select a course');
+        toast.error("Please select a course");
         return;
       }
 
-      await dispatch(createModule({
-        courseId,
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        order: parseInt(formData.order) || modules.length + 1,
-      })).unwrap();
+      await dispatch(
+        createModule({
+          courseId,
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          order: parseInt(formData.order) || modules.length + 1,
+        }),
+      ).unwrap();
 
       setNewModuleDialog(false);
       resetModuleForm();
-      toast.success('Module created successfully');
+      toast.success("Module created successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to create module');
+      toast.error(error || "Failed to create module");
     }
   };
 
@@ -319,7 +394,7 @@ const CourseManagement = () => {
     e.preventDefault();
 
     if (!moduleForm.title || !moduleForm.category) {
-      toast.error('Please fill in required fields');
+      toast.error("Please fill in required fields");
       return;
     }
 
@@ -327,33 +402,35 @@ const CourseManagement = () => {
       const moduleId = moduleForm._id;
       if (!moduleId) return;
 
-      await dispatch(updateModule({
-        moduleId,
-        data: {
-          title: moduleForm.title,
-          description: moduleForm.description,
-          category: moduleForm.category,
-          order: parseInt(moduleForm.order),
-        },
-      })).unwrap();
+      await dispatch(
+        updateModule({
+          moduleId,
+          data: {
+            title: moduleForm.title,
+            description: moduleForm.description,
+            category: moduleForm.category,
+            order: parseInt(moduleForm.order),
+          },
+        }),
+      ).unwrap();
 
       setEditModuleDialog(false);
       resetModuleForm();
-      toast.success('Module updated successfully');
+      toast.success("Module updated successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to update module');
+      toast.error(error || "Failed to update module");
     }
   };
 
   // Handle delete module
   const handleDeleteModule = async (moduleId: string) => {
-    if (!confirm('Are you sure you want to delete this module?')) return;
+    if (!confirm("Are you sure you want to delete this module?")) return;
 
     try {
       await dispatch(deleteModule(moduleId)).unwrap();
-      toast.success('Module deleted successfully');
+      toast.success("Module deleted successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to delete module');
+      toast.error(error || "Failed to delete module");
     }
   };
 
@@ -361,41 +438,48 @@ const CourseManagement = () => {
   const handleTogglePublishModule = async (moduleId: string) => {
     try {
       await dispatch(togglePublishModule(moduleId)).unwrap();
-      toast.success('Module publish status toggled successfully');
+      toast.success("Module publish status toggled successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to toggle publish status');
+      toast.error(error || "Failed to toggle publish status");
     }
   };
 
   // Handle create lesson
   const handleCreateLesson = async (formData: any) => {
-    console.log('Creating lesson with data:', formData);
+    console.log("Creating lesson with data:", formData);
 
-    if (!formData.moduleId || !formData.courseId || !formData.title || !formData.category) {
-      toast.error('Please fill in required fields');
+    if (
+      !formData.moduleId ||
+      !formData.courseId ||
+      !formData.title ||
+      !formData.category
+    ) {
+      toast.error("Please fill in required fields");
       return;
     }
 
     try {
-      await dispatch(createLesson({
-        moduleId: formData.moduleId,
-        courseId: formData.courseId,
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        contentType: formData.contentType,
-        videoUrl: formData.videoUrl,
-        pdfUrl: formData.pdfUrl,
-        textContent: formData.textContent,
-        order: parseInt(formData.order) || 1,
-        isPreview: formData.isPreview,
-      })).unwrap();
+      await dispatch(
+        createLesson({
+          moduleId: formData.moduleId,
+          courseId: formData.courseId,
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          contentType: formData.contentType,
+          videoUrl: formData.videoUrl,
+          pdfUrl: formData.pdfUrl,
+          textContent: formData.textContent,
+          order: parseInt(formData.order) || 1,
+          isPreview: formData.isPreview,
+        }),
+      ).unwrap();
 
       setNewLessonDialog(false);
       resetLessonForm();
-      toast.success('Lesson created successfully');
+      toast.success("Lesson created successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to create lesson');
+      toast.error(error || "Failed to create lesson");
     }
   };
 
@@ -404,7 +488,7 @@ const CourseManagement = () => {
     e.preventDefault();
 
     if (!lessonForm.title || !lessonForm.category) {
-      toast.error('Please fill in required fields');
+      toast.error("Please fill in required fields");
       return;
     }
 
@@ -412,37 +496,40 @@ const CourseManagement = () => {
       const lessonId = lessonForm._id;
       if (!lessonId) return;
 
-      await dispatch(updateLesson({
-        lessonId,
-        data: {
-          title: lessonForm.title,
-          description: lessonForm.description,
-          contentType: lessonForm.contentType,
-          videoUrl: lessonForm.videoUrl,
-          pdfUrl: lessonForm.pdfUrl,
-          textContent: lessonForm.textContent,
-          order: lessonForm.order,
-          isPreview: lessonForm.isPreview,
-        },
-      })).unwrap();
+      await dispatch(
+        updateLesson({
+          lessonId,
+          data: {
+            title: lessonForm.title,
+            description: lessonForm.description,
+            contentType: lessonForm.contentType,
+            videoUrl: lessonForm.videoUrl,
+            pdfUrl: lessonForm.pdfUrl,
+            textContent: lessonForm.textContent,
+            order: lessonForm.order,
+            isPreview: lessonForm.isPreview,
+          },
+        }),
+      ).unwrap();
 
       setEditLessonDialog(false);
       resetLessonForm();
-      toast.success('Lesson updated successfully');
+      toast.success("Lesson updated successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to update lesson');
+      toast.error(error || "Failed to update lesson");
     }
   };
 
   // Handle delete lesson
   const handleDeleteLesson = async (lessonId: string) => {
-    if (!confirm('Are you sure you want to delete this lesson?')) return;
+    if (!confirm("Are you sure you want to delete this lesson?")) return;
 
     try {
       await dispatch(deleteLesson(lessonId)).unwrap();
-      toast.success('Lesson deleted successfully');
+      toast.success("Lesson deleted successfully");
     } catch (error: any) {
-      const message = error?.response?.data?.message || 'Failed to delete lesson';
+      const message =
+        error?.response?.data?.message || "Failed to delete lesson";
       toast.error(message);
     }
   };
@@ -451,46 +538,46 @@ const CourseManagement = () => {
   const handleTogglePublishLesson = async (lessonId: string) => {
     try {
       await dispatch(togglePublishLesson(lessonId)).unwrap();
-      toast.success('Lesson publish status toggled successfully');
+      toast.success("Lesson publish status toggled successfully");
     } catch (error: any) {
-      toast.error(error || 'Failed to toggle publish status');
+      toast.error(error || "Failed to toggle publish status");
     }
   };
 
   // Reset form functions
   const resetCourseForm = () => {
     setCourseForm({
-      title: '',
-      description: '',
-      category: '',
-      level: 'Beginner',
-      price: '',
+      title: "",
+      description: "",
+      category: "",
+      level: "Beginner",
+      price: "",
       duration: 0,
-      thumbnail: '',
+      thumbnail: "",
     });
   };
 
   const resetModuleForm = () => {
     setModuleForm({
-      title: '',
-      description: '',
-      category: '',
-      courseId: '',
-      order: '',
+      title: "",
+      description: "",
+      category: "",
+      courseId: "",
+      order: "",
     });
   };
 
   const resetLessonForm = () => {
     setLessonForm({
-      moduleId: '',
-      courseId: '',
-      title: '',
-      description: '',
-      category: '',
-      contentType: 'video',
-      videoUrl: '',
-      pdfUrl: '',
-      textContent: '',
+      moduleId: "",
+      courseId: "",
+      title: "",
+      description: "",
+      category: "",
+      contentType: "video",
+      videoUrl: "",
+      pdfUrl: "",
+      textContent: "",
       duration: 0,
       order: 0,
       isPreview: false,
@@ -505,11 +592,11 @@ const CourseManagement = () => {
       _id: course._id || course.id,
       title: course.title,
       description: course.description,
-      category: course.category || '',
-      level: course.level || 'Beginner',
+      category: course.category || "",
+      level: course.level || "Beginner",
       price: course.price.toString(),
       duration: course.duration || 0,
-      thumbnail: course.thumbnail || '',
+      thumbnail: course.thumbnail || "",
     });
     setEditCourseDialog(true);
   };
@@ -519,9 +606,9 @@ const CourseManagement = () => {
       _id: module._id || module.id,
       courseId: module.courseId,
       title: module.title,
-      description: module.description || '',
-      category: module.category || '',
-      order: module.order?.toString() || '',
+      description: module.description || "",
+      category: module.category || "",
+      order: module.order?.toString() || "",
     });
     setEditModuleDialog(true);
   };
@@ -532,12 +619,12 @@ const CourseManagement = () => {
       moduleId: lesson.moduleId,
       courseId: lesson.courseId,
       title: lesson.title,
-      description: lesson.description || '',
-      category: lesson.category || '',
+      description: lesson.description || "",
+      category: lesson.category || "",
       contentType: lesson.contentType,
-      videoUrl: lesson.videoUrl || '',
-      pdfUrl: lesson.pdfUrl || '',
-      textContent: lesson.textContent || '',
+      videoUrl: lesson.videoUrl || "",
+      pdfUrl: lesson.pdfUrl || "",
+      textContent: lesson.textContent || "",
       duration: lesson.duration || 0,
       order: lesson.order || 0,
       isPreview: lesson.isPreview || false,
@@ -611,17 +698,20 @@ const CourseManagement = () => {
                 <Label htmlFor="courseCategory">Filter by Category</Label>
                 <Select
                   value={courseFilter.category}
-                  onValueChange={(value) => setCourseFilter({ category: value })}
+                  onValueChange={(value) =>
+                    setCourseFilter({ category: value })
+                  }
                 >
                   <SelectTrigger id="courseCategory">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {user?.category && user?.category?.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
+                    {user?.category &&
+                      user?.category?.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -648,11 +738,10 @@ const CourseManagement = () => {
                       animate={{ opacity: 1, y: 0 }}
                     >
                       <Card
-                        className={`cursor-pointer transition-all ${selectedId === courseId
-                          ? 'ring-2 ring-primary'
-                          : ''
-                          }`}
-                        onClick={() => setSelectedCourse(course)}
+                        className={`cursor-pointer transition-all ${
+                          selectedId === courseId ? "ring-2 ring-primary" : ""
+                        }`}
+                        onClick={() => handleCourseSelect(course)}
                       >
                         {course.thumbnail && (
                           <img
@@ -667,9 +756,11 @@ const CourseManagement = () => {
                               {course.title}
                             </CardTitle>
                             <Badge
-                              variant={course.isPublished ? 'default' : 'secondary'}
+                              variant={
+                                course.isPublished ? "default" : "secondary"
+                              }
                             >
-                              {course.isPublished ? 'Published' : 'Draft'}
+                              {course.isPublished ? "Published" : "Draft"}
                             </Badge>
                           </div>
                           <CardDescription className="line-clamp-2">
@@ -679,7 +770,9 @@ const CourseManagement = () => {
                         <CardContent>
                           <div className="flex items-center justify-between text-sm">
                             <Badge variant="outline">{course.level}</Badge>
-                            <span className="font-semibold">${course.price}</span>
+                            <span className="font-semibold">
+                              ${course.price}
+                            </span>
                           </div>
                         </CardContent>
                         <CardFooter className="flex gap-2">
@@ -736,7 +829,20 @@ const CourseManagement = () => {
                     </h2>
                     <Dialog
                       open={newModuleDialog}
-                      onOpenChange={setNewModuleDialog}
+                      onOpenChange={(open) => {
+                        setNewModuleDialog(open);
+
+                        if (open && selectedCourse) {
+                          const courseId =
+                            selectedCourse.id || selectedCourse._id;
+
+                          setModuleForm((prev) => ({
+                            ...prev,
+                            courseId,
+                            category: selectedCourse.category || "",
+                          }));
+                        }
+                      }}
                     >
                       <DialogTrigger asChild>
                         <Button>
@@ -749,7 +855,9 @@ const CourseManagement = () => {
                           <DialogTitle>Create New Module</DialogTitle>
                         </DialogHeader>
                         <ModuleForm
+                          module={null}
                           courses={courses}
+                          selectedCourse={selectedCourse} 
                           userCategories={user?.category || []}
                           modulesCount={modules.length}
                           onSubmit={handleCreateModule}
@@ -765,10 +873,17 @@ const CourseManagement = () => {
                   {/* Module Filters */}
                   <div className="flex gap-4 items-end">
                     <div className="w-64">
-                      <Label htmlFor="moduleCourse">Filter by Course (Optional)</Label>
+                      <Label htmlFor="moduleCourse">
+                        Filter by Course (Optional)
+                      </Label>
                       <Select
-                        value={moduleFilter.courseId || 'none'}
-                        onValueChange={(value) => setModuleFilter({ ...moduleFilter, courseId: value === 'none' ? '' : value })}
+                        value={moduleFilter.courseId || "none"}
+                        onValueChange={(value) =>
+                          setModuleFilter({
+                            ...moduleFilter,
+                            courseId: value === "none" ? "" : value,
+                          })
+                        }
                       >
                         <SelectTrigger id="moduleCourse">
                           <SelectValue placeholder="All courses" />
@@ -791,17 +906,20 @@ const CourseManagement = () => {
                       <Label htmlFor="moduleCategory">Filter by Category</Label>
                       <Select
                         value={moduleFilter.category}
-                        onValueChange={(value) => setModuleFilter({ ...moduleFilter, category: value })}
+                        onValueChange={(value) =>
+                          setModuleFilter({ ...moduleFilter, category: value })
+                        }
                       >
                         <SelectTrigger id="moduleCategory">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {user?.category && user?.category?.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
+                          {user?.category &&
+                            user?.category?.map((cat) => (
+                              <SelectItem key={cat} value={cat}>
+                                {cat}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -809,7 +927,10 @@ const CourseManagement = () => {
                 </div>
 
                 {/* Edit Module Dialog */}
-                <Dialog open={editModuleDialog} onOpenChange={setEditModuleDialog}>
+                <Dialog
+                  open={editModuleDialog}
+                  onOpenChange={setEditModuleDialog}
+                >
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Edit Module</DialogTitle>
@@ -831,7 +952,9 @@ const CourseManagement = () => {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="editModuleDescription">Description</Label>
+                          <Label htmlFor="editModuleDescription">
+                            Description
+                          </Label>
                           <Textarea
                             id="editModuleDescription"
                             value={moduleForm.description}
@@ -856,11 +979,12 @@ const CourseManagement = () => {
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                             <SelectContent>
-                              {user?.category && user?.category?.map((cat) => (
-                                <SelectItem key={cat} value={cat}>
-                                  {cat}
-                                </SelectItem>
-                              ))}
+                              {user?.category &&
+                                user?.category?.map((cat) => (
+                                  <SelectItem key={cat} value={cat}>
+                                    {cat}
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -877,7 +1001,11 @@ const CourseManagement = () => {
                             </SelectTrigger>
                             <SelectContent>
                               {courses
-                                .filter((course) => !moduleForm.category || course.category === moduleForm.category)
+                                .filter(
+                                  (course) =>
+                                    !moduleForm.category ||
+                                    course.category === moduleForm.category,
+                                )
                                 .map((course) => {
                                   const courseId = course.id || course._id;
                                   if (!courseId) return null;
@@ -926,7 +1054,8 @@ const CourseManagement = () => {
                   <Card>
                     <CardContent className="pt-6 text-center">
                       <p className="text-muted-foreground">
-                        No modules yet. Create a module to organize your lessons.
+                        No modules yet. Create a module to organize your
+                        lessons.
                       </p>
                     </CardContent>
                   </Card>
@@ -950,11 +1079,21 @@ const CourseManagement = () => {
                                     </CardDescription>
                                   )}
                                   <div className="flex items-center gap-2 mt-2">
-                                    <Badge variant={module.isPublished ? 'default' : 'secondary'}>
-                                      {module.isPublished ? 'Published' : 'Draft'}
+                                    <Badge
+                                      variant={
+                                        module.isPublished
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                    >
+                                      {module.isPublished
+                                        ? "Published"
+                                        : "Draft"}
                                     </Badge>
                                     {module.category && (
-                                      <Badge variant="outline">{module.category}</Badge>
+                                      <Badge variant="outline">
+                                        {module.category}
+                                      </Badge>
                                     )}
                                   </div>
                                 </div>
@@ -969,7 +1108,10 @@ const CourseManagement = () => {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => moduleId && handleTogglePublishModule(moduleId)}
+                                    onClick={() =>
+                                      moduleId &&
+                                      handleTogglePublishModule(moduleId)
+                                    }
                                   >
                                     {module.isPublished ? (
                                       <EyeOff className="h-4 w-4" />
@@ -980,7 +1122,9 @@ const CourseManagement = () => {
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={() => moduleId && handleDeleteModule(moduleId)}
+                                    onClick={() =>
+                                      moduleId && handleDeleteModule(moduleId)
+                                    }
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -1033,10 +1177,17 @@ const CourseManagement = () => {
                 {/* Lesson Filters */}
                 <div className="flex gap-4 items-end mb-6">
                   <div className="w-64">
-                    <Label htmlFor="lessonCourse">Filter by Course (Optional)</Label>
+                    <Label htmlFor="lessonCourse">
+                      Filter by Course (Optional)
+                    </Label>
                     <Select
-                      value={lessonFilter.courseId || 'none'}
-                      onValueChange={(value) => setLessonFilter({ ...lessonFilter, courseId: value === 'none' ? '' : value })}
+                      value={lessonFilter.courseId || "none"}
+                      onValueChange={(value) =>
+                        setLessonFilter({
+                          ...lessonFilter,
+                          courseId: value === "none" ? "" : value,
+                        })
+                      }
                     >
                       <SelectTrigger id="lessonCourse">
                         <SelectValue placeholder="All courses" />
@@ -1056,10 +1207,17 @@ const CourseManagement = () => {
                     </Select>
                   </div>
                   <div className="w-64">
-                    <Label htmlFor="lessonModule">Filter by Module (Optional)</Label>
+                    <Label htmlFor="lessonModule">
+                      Filter by Module (Optional)
+                    </Label>
                     <Select
-                      value={lessonFilter.moduleId || 'none'}
-                      onValueChange={(value) => setLessonFilter({ ...lessonFilter, moduleId: value === 'none' ? '' : value })}
+                      value={lessonFilter.moduleId || "none"}
+                      onValueChange={(value) =>
+                        setLessonFilter({
+                          ...lessonFilter,
+                          moduleId: value === "none" ? "" : value,
+                        })
+                      }
                     >
                       <SelectTrigger id="lessonModule">
                         <SelectValue placeholder="All modules" />
@@ -1082,17 +1240,20 @@ const CourseManagement = () => {
                     <Label htmlFor="lessonCategory">Filter by Category</Label>
                     <Select
                       value={lessonFilter.category}
-                      onValueChange={(value) => setLessonFilter({ ...lessonFilter, category: value })}
+                      onValueChange={(value) =>
+                        setLessonFilter({ ...lessonFilter, category: value })
+                      }
                     >
                       <SelectTrigger id="lessonCategory">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {user?.category && user?.category?.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
+                        {user?.category &&
+                          user?.category?.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1139,15 +1300,23 @@ const CourseManagement = () => {
                                       </span>
                                     )}
                                     {lesson.isPreview && (
-                                      <Badge variant="outline">
-                                        Preview
-                                      </Badge>
+                                      <Badge variant="outline">Preview</Badge>
                                     )}
-                                    <Badge variant={lesson.isPublished ? 'default' : 'secondary'}>
-                                      {lesson.isPublished ? 'Published' : 'Draft'}
+                                    <Badge
+                                      variant={
+                                        lesson.isPublished
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                    >
+                                      {lesson.isPublished
+                                        ? "Published"
+                                        : "Draft"}
                                     </Badge>
                                     {lesson.category && (
-                                      <Badge variant="outline">{lesson.category}</Badge>
+                                      <Badge variant="outline">
+                                        {lesson.category}
+                                      </Badge>
                                     )}
                                   </div>
                                 </div>
@@ -1162,7 +1331,10 @@ const CourseManagement = () => {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => lessonId && handleTogglePublishLesson(lessonId)}
+                                    onClick={() =>
+                                      lessonId &&
+                                      handleTogglePublishLesson(lessonId)
+                                    }
                                   >
                                     {lesson.isPublished ? (
                                       <EyeOff className="h-4 w-4" />
@@ -1173,7 +1345,9 @@ const CourseManagement = () => {
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={() => lessonId && handleDeleteLesson(lessonId)}
+                                    onClick={() =>
+                                      lessonId && handleDeleteLesson(lessonId)
+                                    }
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -1215,7 +1389,10 @@ const CourseManagement = () => {
                     id="editDescription"
                     value={courseForm.description}
                     onChange={(e) =>
-                      setCourseForm({ ...courseForm, description: e.target.value })
+                      setCourseForm({
+                        ...courseForm,
+                        description: e.target.value,
+                      })
                     }
                     rows={4}
                     required
@@ -1234,11 +1411,12 @@ const CourseManagement = () => {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {user?.category && user?.category?.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
+                        {user?.category &&
+                          user?.category?.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -1255,7 +1433,9 @@ const CourseManagement = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Beginner">Beginner</SelectItem>
-                        <SelectItem value="Intermediate">Intermediate</SelectItem>
+                        <SelectItem value="Intermediate">
+                          Intermediate
+                        </SelectItem>
                         <SelectItem value="Advanced">Advanced</SelectItem>
                       </SelectContent>
                     </Select>
@@ -1282,7 +1462,10 @@ const CourseManagement = () => {
                     type="url"
                     value={courseForm.thumbnail}
                     onChange={(e) =>
-                      setCourseForm({ ...courseForm, thumbnail: e.target.value })
+                      setCourseForm({
+                        ...courseForm,
+                        thumbnail: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -1349,11 +1532,12 @@ const CourseManagement = () => {
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {user?.category && user?.category?.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
+                      {user?.category &&
+                        user?.category?.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1455,9 +1639,7 @@ const CourseManagement = () => {
                     }
                     className="h-4 w-4"
                   />
-                  <Label htmlFor="editIsPreview">
-                    Allow as preview (free)
-                  </Label>
+                  <Label htmlFor="editIsPreview">Allow as preview (free)</Label>
                 </div>
               </div>
               <DialogFooter className="mt-6">
