@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { motion } from 'framer-motion';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
+import { getMyCourses } from '@/redux/slice/user';
 
 
 const Profile = () => {
@@ -26,6 +28,16 @@ const Profile = () => {
   });
   const [notifications, setNotifications] = useState({ email: user?.notifications?.email ?? true, sms: user?.notifications?.sms ?? false });
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+
+  const dispatch = useAppDispatch();
+  const {isAuthenticated, myCourses, coursesLoading, message } = useAppSelector((state) => state.user);
+
+  useEffect(() => {
+  if (isAuthenticated && user?._id) {
+    dispatch(getMyCourses());
+  }
+}, [dispatch, isAuthenticated, user?._id]);
+
 
   useEffect(() => {
     localStorage.setItem('profileActiveTab', activeTab);
@@ -237,13 +249,55 @@ const Profile = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground mb-4">You haven't enrolled in any courses yet.</p>
-                      <Button asChild>
-                        <a href="/courses">Browse Courses</a>
-                      </Button>
-                    </div>
-                  </CardContent>
+  {coursesLoading ? (
+    <p className="text-center py-8">Loading...</p>
+  ) : myCourses.length === 0 ? (
+    <div className="text-center py-8">
+      <p className="text-muted-foreground mb-4">
+        You haven't enrolled in any courses yet.
+      </p>
+      <Button asChild>
+        <a href="/courses">Browse Courses</a>
+      </Button>
+    </div>
+  ) : (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm border rounded-lg">
+        <thead className="bg-muted">
+          <tr>
+            <th className="p-3 text-left">Course</th>
+            <th className="p-3 text-left">Price</th>
+            <th className="p-3 text-left">Purchased On</th>
+            <th className="p-3 text-left">Action</th>
+
+          </tr>
+        </thead>
+        <tbody>
+          {myCourses.map((item) => (
+            <tr key={item._id} className="border-t">
+      <td className="p-3 font-medium">
+        {item.courseId?.title}
+      </td>
+      <td className="p-3">₹{item.amount}</td>
+      <td className="p-3">
+        {new Date(item.date).toLocaleDateString()}
+      </td>
+      <td className="p-3">
+        <Button
+          size="sm"
+          onClick={() => navigate(`/course/${item.courseId._id}`)}
+        >
+          View
+        </Button>
+      </td>
+    </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</CardContent>
+
                 </Card>
               </motion.div>
             </TabsContent>
