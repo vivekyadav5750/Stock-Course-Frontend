@@ -33,6 +33,8 @@ type UserState = {
     message: string;
     isAuthenticated: boolean;
     // categories?: string[];
+    myCourses: any[];    
+    coursesLoading: boolean;
 };
 
 type LoginData = {
@@ -54,6 +56,8 @@ const initialState: UserState = {
     message: "",
     isAuthenticated: false,
     // categories: [],
+    myCourses: [],    
+    coursesLoading: false
 };
 
 export const userLogin = createAsyncThunk(
@@ -113,6 +117,24 @@ export const getUser = createAsyncThunk(
             return rejectWithValue(message);
         }
     }
+);
+
+export const getMyCourses = createAsyncThunk(
+  "courses/getMyCourses",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/course/my-courses");
+
+      if (!response.data.success) {
+        return rejectWithValue("Failed to fetch enrolled courses");
+      }
+
+      return response.data.data; // <-- your API array
+    } catch (error: any) {
+      const message = getErrorMessage(error, "Failed to fetch enrolled courses");
+      return rejectWithValue(message);
+    }
+  }
 );
 
 export const updateUserProfile = createAsyncThunk(
@@ -345,6 +367,19 @@ const userSlice = createSlice({
                 state.user = null;
                 state.isAuthenticated = false;
             })
+
+            // My Enrolled Courses
+            .addCase(getMyCourses.pending, (state) => {
+                state.coursesLoading = true;
+            })
+            .addCase(getMyCourses.fulfilled, (state, action) => {
+                state.coursesLoading = false;
+                state.myCourses = action.payload;
+            })
+            .addCase(getMyCourses.rejected, (state, action) => {
+                state.coursesLoading = false;
+                state.message = action.payload as string;
+            });
     },
 });
 
