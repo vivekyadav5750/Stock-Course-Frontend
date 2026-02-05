@@ -1,40 +1,11 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
-import {
-  getAllCourses,
-} from "@/redux/slice/course";
-import {
-  getAllModules,
-} from "@/redux/slice/module";
-import {
-  getAllLessons,
-  createLesson,
-  updateLesson,
-  deleteLesson,
-  togglePublishLesson,
-} from "@/redux/slice/lesson";
-import { LessonDialog } from "@/pages/admin/CourseManagement/Lesson/LessonDialog";
-import { Button } from "@/components/ui/button";
+import { getAllCourses } from "@/redux/slice/course";
+import { getAllModules } from "@/redux/slice/module";
+import { getAllLessons } from "@/redux/slice/lesson";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -42,20 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  BookOpen,
-  Video,
-  FileText,
-} from "lucide-react";
 import Course from "./Course";
 import Module from "./Module";
 import Lesson from "./Lesson";
@@ -76,11 +35,7 @@ const CourseManagement = () => {
     (state) => state.lesson,
   );
 
-  // Local state
-
   const [isLoading, setIsLoading] = useState(true);
-
-  // Dialog states
 
   const [filter, setFilter] = useState({
     category: user?.category && user?.category.length > 0 ? user.category[0] : "",
