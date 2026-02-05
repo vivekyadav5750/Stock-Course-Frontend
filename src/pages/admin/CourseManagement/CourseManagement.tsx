@@ -177,7 +177,7 @@ const CourseManagement = () => {
           </TabsList>
 
           {/* Filters */}
-          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 items-end">
+          <div className="mb-6 mt-4 grid grid-cols-1 gap-4 md:grid-cols-3 items-end">
             <div>
               <Label htmlFor="courseCategory">Filter by Category</Label>
               <Select
