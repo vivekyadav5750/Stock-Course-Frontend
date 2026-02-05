@@ -1,6 +1,26 @@
 /**
  * Extracts the most useful error message from API error responses
  */
+const normalizeMessage = (value: any, fallback: string): string => {
+  if (typeof value === 'string') return value;
+  if (value == null) return fallback;
+  if (Array.isArray(value)) {
+    const messages = value
+      .map((item) => (typeof item === 'string' ? item : item?.message))
+      .filter(Boolean);
+    return messages.length > 0 ? messages.join(', ') : fallback;
+  }
+  if (typeof value === 'object') {
+    if (typeof value.message === 'string') return value.message;
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+};
+
 export const getErrorMessage = (error: any, fallback: string = 'An error occurred'): string => {
   // If error is a string, return it
   if (typeof error === 'string') {
@@ -11,22 +31,25 @@ export const getErrorMessage = (error: any, fallback: string = 'An error occurre
   const response = error?.response?.data;
   
   if (!response) {
-    return error?.message || fallback;
+    return normalizeMessage(error?.message ?? error, fallback);
   }
 
   // If there's a detailed errors array, prioritize that
   if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
     // If single error, return its message
     if (response.errors.length === 1) {
-      return response.errors[0].message;
+      return normalizeMessage(response.errors[0].message, fallback);
     }
     
     // If multiple errors, combine them
-    return response.errors.map((err: any) => err.message).join(', ');
+    return response.errors
+      .map((err: any) => normalizeMessage(err?.message, fallback))
+      .filter(Boolean)
+      .join(', ') || fallback;
   }
 
   // Fall back to general message
-  return response.message || fallback;
+  return normalizeMessage(response.message, fallback);
 };
 
 /**
