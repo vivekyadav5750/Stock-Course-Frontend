@@ -67,7 +67,7 @@ export const CourseDialog = ({ data, filter, onSubmit, onClose }: CourseDialogPr
   };
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open onClose={onClose} fullWidth maxWidth="sm" disableEnforceFocus key={data?._id ?? 'new'}>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <CustomDialogHeader
           title={data?._id ? 'Update Course' : 'Create Course'}
