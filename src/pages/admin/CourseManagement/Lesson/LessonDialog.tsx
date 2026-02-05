@@ -63,6 +63,7 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
       textContent: formData.textContent,
       order: parseInt(formData.order) || 1,
       isPreview: formData.isPreview,
+      duration: parseInt(formData.duration) || 0,
     }
 
     try {
@@ -116,6 +117,31 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
                       {cat}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="lessonCourse">Course *</Label>
+              <Select
+                value={formData.courseId}
+                onValueChange={(value) => setFormData({ ...formData, courseId: value, moduleId: '' })}
+                required
+              >
+                <SelectTrigger id="lessonCourse">
+                  <SelectValue placeholder="Select a course" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses
+                    .filter((course) => !formData.category || course.category === formData.category)
+                    .map((course) => {
+                      const courseId = course._id;
+                      if (!courseId) return null;
+                      return (
+                        <SelectItem key={courseId} value={courseId}>
+                          {course.title}
+                        </SelectItem>
+                      );
+                    })}
                 </SelectContent>
               </Select>
             </div>
