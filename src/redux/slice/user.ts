@@ -1,53 +1,16 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance, { setAccessToken } from "@/lib/axios";
 import { getErrorMessage } from "@/lib/utils";
-import { Course_Types } from "@/types";
-
-export type User = {
-    _id?: string;
-    id?: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    mobile?: string;
-    avatar?: string;
-    isAdmin: boolean;
-    isSuperAdmin?: boolean;
-    isVerified?: boolean;
-    isBlocked?: boolean;
-    courses?: Course_Types[];
-    purchasedCourses?: Course_Types[];
-    transactions?: string[];
-    createdAt?: string;
-    updatedAt?: string;
-    notifications?: {
-        email: boolean;
-        sms: boolean;
-    },
-    category?: string[];
-};
+import { User_Types } from "@/types";
 
 type UserState = {
-    user: User | null;
+    user: User_Types | null;
     status: "idle" | "loading" | "success" | "failed";
     message: string;
     isAuthenticated: boolean;
     // categories?: string[];
-    myCourses: any[];    
+    myCourses: User_Types["courses"];
     coursesLoading: boolean;
-};
-
-type LoginData = {
-    email: string;
-    password: string;
-};
-
-type RegisterData = {
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    mobile?: string;
 };
 
 const initialState: UserState = {
@@ -56,13 +19,13 @@ const initialState: UserState = {
     message: "",
     isAuthenticated: false,
     // categories: [],
-    myCourses: [],    
+    myCourses: [],
     coursesLoading: false
 };
 
 export const userLogin = createAsyncThunk(
     "user/login",
-    async (data: LoginData, { rejectWithValue }) => {
+    async (data: Pick<User_Types, "email"> & { password: string }, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.post("/auth/login", data);
 
@@ -85,7 +48,7 @@ export const userLogin = createAsyncThunk(
 
 export const userRegister = createAsyncThunk(
     "user/register",
-    async (data: RegisterData, { rejectWithValue }) => {
+    async (data: Pick<User_Types, "firstName" | "lastName" | "email" | "mobile"> & { password: string }, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.post("/auth/signup", data);
 
@@ -120,26 +83,26 @@ export const getUser = createAsyncThunk(
 );
 
 export const getMyCourses = createAsyncThunk(
-  "courses/getMyCourses",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get("/course/my-courses");
+    "courses/getMyCourses",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await axiosInstance.get("/course/my-courses");
 
-      if (!response.data.success) {
-        return rejectWithValue("Failed to fetch enrolled courses");
-      }
+            if (!response.data.success) {
+                return rejectWithValue("Failed to fetch enrolled courses");
+            }
 
-      return response.data.data; // <-- your API array
-    } catch (error: any) {
-      const message = getErrorMessage(error, "Failed to fetch enrolled courses");
-      return rejectWithValue(message);
+            return response.data.data; // <-- your API array
+        } catch (error: any) {
+            const message = getErrorMessage(error, "Failed to fetch enrolled courses");
+            return rejectWithValue(message);
+        }
     }
-  }
 );
 
 export const updateUserProfile = createAsyncThunk(
     "user/updateProfile",
-    async (data: Partial<User>, { rejectWithValue }) => {
+    async (data: Partial<User_Types>, { rejectWithValue }) => {
         try {
             const response = await axiosInstance.put("/auth/profile", data);
 

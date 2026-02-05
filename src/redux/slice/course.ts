@@ -3,7 +3,6 @@ import axiosInstance from "@/lib/axios";
 import { getErrorMessage } from "@/lib/utils";
 import { Course_Types } from "@/types";
 
-
 type CourseState = {
   courses: Course_Types[];
   currentCourse: Course_Types | null;
@@ -12,19 +11,6 @@ type CourseState = {
   totalPages: number;
   currentPage: number;
 };
-
-type CreateCourseData = {
-  title: string;
-  description: string;
-  thumbnail?: string;
-  price: number;
-  discountPrice?: number;
-  category?: string;
-  level?: "Beginner" | "Intermediate" | "Advanced";
-  language?: string;
-};
-
-type UpdateCourseData = Partial<CreateCourseData>;
 
 const initialState: CourseState = {
   courses: [],
@@ -35,14 +21,6 @@ const initialState: CourseState = {
   currentPage: 1,
 };
 
-// Helper to normalize course data
-// const normalizeCourse = (course: any): Course_Types => {
-//   if (!course) return course;
-//   return {
-//     ...course,
-//     id: course._id || course.id,
-//   };
-// };
 
 // admin
 // Get all courses with pagination and filters
@@ -129,7 +107,7 @@ export const getCourseById = createAsyncThunk(
 // Create new course (admin)
 export const createCourse = createAsyncThunk(
   "course/create",
-  async (data: CreateCourseData, { rejectWithValue }) => {
+  async (data: Partial<Course_Types>, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post("/course", data);
 
@@ -148,7 +126,7 @@ export const createCourse = createAsyncThunk(
 // Update course (admin)
 export const updateCourse = createAsyncThunk(
   "course/update",
-  async ({ courseId, data }: { courseId: string; data: UpdateCourseData }, { rejectWithValue }) => {
+  async ({ courseId, data }: { courseId: string; data: Partial<Course_Types> }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.put(`/course/${courseId}`, data);
 
@@ -357,7 +335,7 @@ const courseSlice = createSlice({
       })
       .addCase(togglePublishCourse.fulfilled, (state, action) => {
         state.status = "success";
-        const index = state.courses.findIndex(c => c._id === action.payload._id );
+        const index = state.courses.findIndex(c => c._id === action.payload._id);
         console.log("index found:", index);
         if (index !== -1) {
           state.courses[index] = action.payload;

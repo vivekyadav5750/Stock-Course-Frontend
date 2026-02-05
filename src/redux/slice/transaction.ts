@@ -1,38 +1,15 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "@/lib/axios";
 import { getErrorMessage } from "@/lib/utils";
-
-export type Transaction = {
-  _id?: string;
-  id?: string;
-  userId: string;
-  courseId: string;
-  amount: number;
-  currency: string;
-  paymentMethod?: string;
-  paymentStatus: "pending" | "completed" | "failed" | "refunded";
-  transactionId?: string;
-  orderId?: string;
-  paymentGateway?: "razorpay" | "stripe" | "paypal";
-  metadata?: Record<string, any>;
-  createdAt?: string;
-  updatedAt?: string;
-};
+import { Transaction_Types } from "@/types";
 
 type TransactionState = {
-  transactions: Transaction[];
-  currentTransaction: Transaction | null;
+  transactions: Transaction_Types[];
+  currentTransaction: Transaction_Types | null;
   status: "idle" | "loading" | "success" | "failed";
   message: string;
   totalPages: number;
   currentPage: number;
-};
-
-type CreateTransactionData = {
-  courseId: string;
-  amount: number;
-  currency?: string;
-  paymentMethod?: string;
 };
 
 const initialState: TransactionState = {
@@ -42,15 +19,6 @@ const initialState: TransactionState = {
   message: "",
   totalPages: 1,
   currentPage: 1,
-};
-
-// Helper to normalize transaction data
-const normalizeTransaction = (transaction: any): Transaction => {
-  if (!transaction) return transaction;
-  return {
-    ...transaction,
-    id: transaction._id || transaction.id,
-  };
 };
 
 // Get all transactions (user's own or admin all)
@@ -72,7 +40,7 @@ export const getAllTransactions = createAsyncThunk(
       }
 
       return {
-        transactions: response.data.data.transactions.map(normalizeTransaction),
+        transactions: response.data.data.transactions,
         totalPages: response.data.data.totalPages || 1,
         currentPage: response.data.data.currentPage || 1,
       };
@@ -101,7 +69,7 @@ export const getUserTransactions = createAsyncThunk(
       }
 
       return {
-        transactions: response.data.data.transactions.map(normalizeTransaction),
+        transactions: response.data.data.transactions,
         totalPages: response.data.data.totalPages || 1,
         currentPage: response.data.data.currentPage || 1,
       };
@@ -123,7 +91,7 @@ export const getTransactionById = createAsyncThunk(
         return rejectWithValue(response.data.message || "Failed to fetch transaction");
       }
 
-      return normalizeTransaction(response.data.data);
+      return response.data.data;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to fetch transaction");
       return rejectWithValue(message);
@@ -134,7 +102,7 @@ export const getTransactionById = createAsyncThunk(
 // Create payment order
 export const createPaymentOrder = createAsyncThunk(
   "transaction/createOrder",
-  async (data: CreateTransactionData, { rejectWithValue }) => {
+  async (data: Omit<Transaction_Types, "_id" | "createdAt" | "updatedAt" | "userId" | "paymentStatus">, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post("/transactions/create-order", data);
 
@@ -142,7 +110,7 @@ export const createPaymentOrder = createAsyncThunk(
         return rejectWithValue(response.data.message || "Failed to create payment order");
       }
 
-      return normalizeTransaction(response.data.data);
+      return response.data.data;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to create payment order");
       return rejectWithValue(message);
@@ -165,7 +133,7 @@ export const verifyPayment = createAsyncThunk(
         return rejectWithValue(response.data.message || "Payment verification failed");
       }
 
-      return normalizeTransaction(response.data.data);
+      return response.data.data;
     } catch (error: any) {
       const message = getErrorMessage(error, "Payment verification failed");
       return rejectWithValue(message);
@@ -184,7 +152,7 @@ export const refundTransaction = createAsyncThunk(
         return rejectWithValue(response.data.message || "Failed to refund transaction");
       }
 
-      return normalizeTransaction(response.data.data);
+      return response.data.data;
     } catch (error: any) {
       const message = getErrorMessage(error, "Failed to refund transaction");
       return rejectWithValue(message);
@@ -240,7 +208,7 @@ const transactionSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Get User Transactions
       .addCase(getUserTransactions.pending, (state) => {
         state.status = "loading";
@@ -256,7 +224,7 @@ const transactionSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Get Transaction By ID
       .addCase(getTransactionById.pending, (state) => {
         state.status = "loading";
@@ -270,7 +238,7 @@ const transactionSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Create Payment Order
       .addCase(createPaymentOrder.pending, (state) => {
         state.status = "loading";
@@ -285,7 +253,7 @@ const transactionSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Verify Payment
       .addCase(verifyPayment.pending, (state) => {
         state.status = "loading";
@@ -301,7 +269,7 @@ const transactionSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Refund Transaction
       .addCase(refundTransaction.pending, (state) => {
         state.status = "loading";
@@ -309,11 +277,11 @@ const transactionSlice = createSlice({
       })
       .addCase(refundTransaction.fulfilled, (state, action) => {
         state.status = "success";
-        const index = state.transactions.findIndex(t => t.id === action.payload.id || t._id === action.payload._id);
+        const index = state.transactions.findIndex(t => t._id === action.payload._id);
         if (index !== -1) {
           state.transactions[index] = action.payload;
         }
-        if (state.currentTransaction?.id === action.payload.id) {
+        if (state.currentTransaction?._id === action.payload._id) {
           state.currentTransaction = action.payload;
         }
         state.message = "Transaction refunded successfully";
@@ -322,7 +290,7 @@ const transactionSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-      
+
       // Get Transaction Stats
       .addCase(getTransactionStats.pending, (state) => {
         state.status = "loading";
