@@ -21,7 +21,7 @@ import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ChangePassword from "./pages/ChangePassword";
 import AdminDashboard from "./pages/admin/Dashboard";
-import CourseManagement from "./pages/admin/CourseManagement";
+import CourseManagement from "./pages/admin/CourseManagement/CourseManagement";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 

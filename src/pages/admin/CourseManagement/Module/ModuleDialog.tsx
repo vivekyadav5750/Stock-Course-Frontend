@@ -5,104 +5,68 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DialogFooter } from '@/components/ui/dialog';
+import { Course_Types, Module_Types } from '@/types';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
+import { toast } from 'sonner';
+import { createModule, updateModule } from '@/redux/slice/module';
 
-interface Module {
-  _id?: string;
-  id?: string;
-  title: string;
-  description: string;
-  category: string;
-  courseId: string;
-  order: number;
+interface ModuleDialogProps {
+  data: Module_Types | null;
+  courses: Course_Types[];
+  filter: any
+  onSubmit: () => void;
+  onClose: () => void;
 }
 
-interface Course {
-  _id?: string;
-  id?: string;
-  title: string;
-  category?: string;
-}
+export const ModuleDialog = ({ data, courses, filter, onSubmit, onClose }: ModuleDialogProps) => {
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.user);
 
-interface ModuleFormProps {
-  module?: Module | null;
-  courses: Course[];
-  selectedCourse?: Course | null;
-  userCategories: string[];
-  modulesCount: number;
-  onSubmit: (formData: any) => void;
-  onCancel: () => void;
-}
-
-export const ModuleForm = ({ module, courses,selectedCourse, userCategories, modulesCount, onSubmit, onCancel }: ModuleFormProps) => {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: '',
-    courseId: '',
-    order: '',
+    title: data?.title || '',
+    description: data?.description || '',
+    category: data?.category || filter?.category || '',
+    courseId: data?.courseId || filter?.courseId || '',
+    order: data?.order?.toString() || '',
   });
 
-  useEffect(() => {
-    if (module) {
-      setFormData({
-        title: module.title || '',
-        description: module.description || '',
-        category: module.category || '',
-        courseId: module.courseId || '',
-        order: module.order?.toString() || '',
-      });
-    }
-  }, [module]);
 
-  useEffect(() => {
-  if (selectedCourse) {
-    const courseId = selectedCourse.id || selectedCourse._id || '';
-
-    setFormData((prev) => ({
-      ...prev,
-      courseId,
-      category: selectedCourse.category || '',
-    }));
-  }
-}, [selectedCourse]);
-
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate required fields
-    if (!formData.title || !formData.category || !formData.courseId) {
+
+    const payload = {
+      title: formData.title,
+      description: formData.description,
+      category: formData.category,
+      courseId: formData.courseId,
+      order: parseInt(formData.order),
+    }
+
+    try {
+      if (data?._id) {
+        await dispatch(updateModule({ moduleId: data._id, data: payload, })).unwrap();
+      }
+      else {
+        await dispatch(createModule(payload)).unwrap();
+      }
+      toast.success(`Module ${data?._id ? 'updated' : 'created'} successfully`);
+    }
+    catch (error: any) {
+      toast.error(error || `Failed to ${data?._id ? 'update' : 'create'} module`);
       return;
     }
-    
-    onSubmit(formData);
+
+    onClose();
+    onSubmit();
   };
 
-  const filteredCourses = courses.filter((course) => 
+  const filteredCourses = courses.filter((course) =>
     !formData.category || course.category === formData.category
   );
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="moduleTitle">Title *</Label>
-          <Input
-            id="moduleTitle"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="moduleDescription">Description</Label>
-          <Textarea
-            id="moduleDescription"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={3}
-          />
-        </div>
         <div>
           <Label htmlFor="moduleCategory">Category *</Label>
           <Select
@@ -114,7 +78,7 @@ export const ModuleForm = ({ module, courses,selectedCourse, userCategories, mod
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {userCategories.map((cat) => (
+              {user?.category.map((cat) => (
                 <SelectItem key={cat} value={cat}>
                   {cat}
                 </SelectItem>
@@ -134,7 +98,7 @@ export const ModuleForm = ({ module, courses,selectedCourse, userCategories, mod
             </SelectTrigger>
             <SelectContent>
               {filteredCourses.map((course) => {
-                const courseId = course.id || course._id;
+                const courseId = course._id;
                 if (!courseId) return null;
                 return (
                   <SelectItem key={courseId} value={courseId}>
@@ -145,6 +109,26 @@ export const ModuleForm = ({ module, courses,selectedCourse, userCategories, mod
             </SelectContent>
           </Select>
         </div>
+
+        <div>
+          <Label htmlFor="moduleTitle">Title *</Label>
+          <Input
+            id="moduleTitle"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="moduleDescription">Description</Label>
+          <Textarea
+            id="moduleDescription"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={3}
+          />
+        </div>
+
         <div>
           <Label htmlFor="moduleOrder">Order</Label>
           <Input
@@ -152,15 +136,15 @@ export const ModuleForm = ({ module, courses,selectedCourse, userCategories, mod
             type="number"
             value={formData.order}
             onChange={(e) => setFormData({ ...formData, order: e.target.value })}
-            placeholder={`${modulesCount + 1}`}
+            placeholder={`1..`}
           />
         </div>
       </div>
       <DialogFooter className="mt-6">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit">{module ? 'Update' : 'Create'} Module</Button>
+        <Button type="submit">{data?._id ? 'Update' : 'Create'} Module</Button>
       </DialogFooter>
     </form>
   );

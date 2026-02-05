@@ -3,16 +3,12 @@ import axiosInstance from "@/lib/axios";
 import { getErrorMessage } from "@/lib/utils";
 import { Module_Types } from "@/types";
 
-
-
 type ModuleState = {
   modules: Module_Types[];
   currentModule: Module_Types | null;
   status: "idle" | "loading" | "success" | "failed";
   message: string;
 };
-
-export type UpdateModuleData = Partial<Omit<Module_Types, 'courseId'>>;
 
 const initialState: ModuleState = {
   modules: [],
@@ -90,7 +86,7 @@ export const createModule = createAsyncThunk(
 // Update module (admin)
 export const updateModule = createAsyncThunk(
   "module/update",
-  async ({ moduleId, data }: { moduleId: string; data: UpdateModuleData }, { rejectWithValue }) => {
+  async ({ moduleId, data }: { moduleId: string; data: Partial<Module_Types> }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.put(`/module/${moduleId}`, data);
 

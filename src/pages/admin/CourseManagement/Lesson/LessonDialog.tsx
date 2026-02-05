@@ -6,120 +6,72 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { DialogFooter } from '@/components/ui/dialog';
-import { CONTENT_TYPES } from '@/types';
+import { CONTENT_TYPES, Lesson_Types, Module_Types, Course_Types } from '@/types';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
+import { createLesson, updateLesson } from '@/redux/slice/lesson';
+import { toast } from "sonner";
 
-interface Lesson {
-  _id?: string;
-  id?: string;
-  title: string;
-  description?: string;
-  category?: string;
-  moduleId: string;
-  courseId: string;
-  contentType: string;
-  videoUrl?: string;
-  pdfUrl?: string;
-  textContent?: string;
-  order: number;
-  duration: number;
-  isPreview: boolean;
+interface LessonDialogProps {
+  data: Lesson_Types | null;
+  courses: Course_Types[];
+  modules: Module_Types[];
+  filter: any
+  onSubmit: () => void;
+  onClose: () => void;
 }
 
-interface Module {
-  _id?: string;
-  id?: string;
-  title: string;
-  courseId?: string;
-  course?: any;
-  category?: string;
-}
-
-interface Course {
-  _id?: string;
-  id?: string;
-  title: string;
-  category?: string;
-}
-
-interface LessonFormProps {
-  lesson?: Lesson | null;
-  modules: Module[];
-  courses: Course[];
-  userCategories: string[];
-  lessonsCount: number;
-  onSubmit: (formData: any) => void;
-  onCancel: () => void;
-}
-
-export const LessonForm = ({ lesson, modules, courses, userCategories, lessonsCount, onSubmit, onCancel }: LessonFormProps) => {
-  const [formData, setFormData] = useState<{
-    moduleId: string;
-    courseId: string;
-    title: string;
-    description: string;
-    category: string;
-    contentType: typeof CONTENT_TYPES[keyof typeof CONTENT_TYPES];
-    videoUrl: string;
-    pdfUrl: string;
-    textContent: string;
-    order: string;
-    duration: string;
-    isPreview: boolean;
-  }>({
-    moduleId: '',
-    courseId: '',
-    title: '',
-    description: '',
-    category: '',
-    contentType: CONTENT_TYPES.VIDEO,
-    videoUrl: '',
-    pdfUrl: '',
-    textContent: '',
-    order: '',
-    duration: '',
-    isPreview: false,
+export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose }: LessonDialogProps) => {
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.user);
+  const [formData, setFormData] = useState({
+    category: data?.category || filter?.category || '',
+    moduleId: data?.moduleId || filter?.moduleId || '',
+    courseId: data?.courseId || filter?.courseId || '',
+    title: data?.title || '',
+    description: data?.description || '',
+    contentType: data?.contentType || CONTENT_TYPES.VIDEO,
+    videoUrl: data?.videoUrl || '',
+    pdfUrl: data?.pdfUrl || '',
+    textContent: data?.textContent || '',
+    order: data?.order?.toString() || '',
+    duration: data?.duration?.toString() || '',
+    isPreview: data?.isPreview || false,
   });
 
-  useEffect(() => {
-    if (lesson) {
-      setFormData({
-        moduleId: lesson.moduleId || '',
-        courseId: lesson.courseId || '',
-        title: lesson.title || '',
-        description: lesson.description || '',
-        category: lesson.category || '',
-        contentType: (lesson.contentType || CONTENT_TYPES.VIDEO) as typeof CONTENT_TYPES[keyof typeof CONTENT_TYPES],
-        videoUrl: lesson.videoUrl || '',
-        pdfUrl: lesson.pdfUrl || '',
-        textContent: lesson.textContent || '',
-        order: lesson.order?.toString() || '',
-        duration: lesson.duration?.toString() || '',
-        isPreview: lesson.isPreview || false,
-      });
-    }
-  }, [lesson]);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate required fields
-    if (!formData.title || !formData.moduleId || !formData.courseId || !formData.category || !formData.contentType) {
+
+    const payload = {
+      category: formData.category,
+      moduleId: formData.moduleId,
+      courseId: formData.courseId,
+      title: formData.title,
+      description: formData.description,
+      contentType: formData.contentType,
+      videoUrl: formData.videoUrl,
+      pdfUrl: formData.pdfUrl,
+      textContent: formData.textContent,
+      order: parseInt(formData.order) || 1,
+      isPreview: formData.isPreview,
+    }
+
+    try {
+      if (data?._id) {
+        await dispatch(updateLesson({ lessonId: data._id, data: payload })).unwrap();
+      } else {
+        await dispatch(createLesson(payload)).unwrap();
+      }
+      toast.success(`Lesson ${data?._id ? 'updated' : 'created'} successfully`);
+    }
+    catch (error: any) {
+      toast.error(error || `Failed to ${data?._id ? 'update' : 'create'} lesson`);
       return;
     }
 
-    // Validate content based on type
-    if (formData.contentType === CONTENT_TYPES.VIDEO && !formData.videoUrl) {
-      return;
-    }
-    if (formData.contentType === CONTENT_TYPES.PDF && !formData.pdfUrl) {
-      return;
-    }
-    if (formData.contentType === CONTENT_TYPES.TEXT && !formData.textContent) {
-      return;
-    }
-    
-    onSubmit(formData);
+    onClose();
+    onSubmit();
   };
+
 
   // Filter modules by category only
   const filteredModules = modules.filter((module) => {
@@ -143,7 +95,7 @@ export const LessonForm = ({ lesson, modules, courses, userCategories, lessonsCo
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
             <SelectContent>
-              {userCategories.map((cat) => (
+              {user?.category.map((cat) => (
                 <SelectItem key={cat} value={cat}>
                   {cat}
                 </SelectItem>
@@ -157,8 +109,8 @@ export const LessonForm = ({ lesson, modules, courses, userCategories, lessonsCo
             value={formData.moduleId}
             onValueChange={(value) => {
               // Extract courseId from selected module
-              const selectedModule = modules.find(m => (m.id || m._id) === value);
-              const courseId = selectedModule?.courseId || (selectedModule?.course as any)?._id || (selectedModule?.course as any)?.id || '';
+              const selectedModule = modules.find(m => (m._id) === value);
+              const courseId = selectedModule?.courseId || (selectedModule?.courseId as any)?._id || '';
               setFormData({ ...formData, moduleId: value, courseId });
             }}
             required
@@ -168,7 +120,7 @@ export const LessonForm = ({ lesson, modules, courses, userCategories, lessonsCo
             </SelectTrigger>
             <SelectContent>
               {filteredModules.map((module) => {
-                const moduleId = module.id || module._id;
+                const moduleId = module._id;
                 if (!moduleId) return null;
                 return (
                   <SelectItem key={moduleId} value={moduleId}>
@@ -259,7 +211,7 @@ export const LessonForm = ({ lesson, modules, courses, userCategories, lessonsCo
             type="number"
             value={formData.order}
             onChange={(e) => setFormData({ ...formData, order: e.target.value })}
-            placeholder={`${lessonsCount + 1}`}
+            placeholder={`1...`}
           />
         </div>
         <div>
@@ -282,10 +234,10 @@ export const LessonForm = ({ lesson, modules, courses, userCategories, lessonsCo
         </div>
       </div>
       <DialogFooter className="mt-6">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit">{lesson ? 'Update' : 'Create'} Lesson</Button>
+        <Button type="submit">{data ? 'Update' : 'Create'} Lesson</Button>
       </DialogFooter>
     </form>
   );
