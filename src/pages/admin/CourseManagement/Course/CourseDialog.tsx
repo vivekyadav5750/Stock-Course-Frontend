@@ -1,10 +1,6 @@
 import { useState } from 'react';
-import { Box, Dialog } from '@mui/material';
+import { Box, Dialog, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CustomDialogContent from '@/components/CustomDialog/CustomDialogContent';
 import CustomDialogFooter from '@/components/CustomDialog/CustomDialogFooter';
 import CustomDialogHeader from '@/components/CustomDialog/CustomDialogHeader';
@@ -67,112 +63,109 @@ export const CourseDialog = ({ data, filter, onSubmit, onClose }: CourseDialogPr
   };
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm" disableEnforceFocus key={data?._id ?? 'new'}>
+    <Dialog open onClose={onClose} fullWidth maxWidth="md" disableEnforceFocus key={data?._id ?? 'new'}>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <CustomDialogHeader
           title={data?._id ? 'Update Course' : 'Create Course'}
           onClose={onClose}
         />
         <CustomDialogContent>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="courseTitle">Title *</Label>
-              <Input
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
                 id="courseTitle"
+                label="Title"
+                variant="outlined"
+                margin="normal"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
+                fullWidth
               />
-            </div>
-            <div>
-              <Label htmlFor="courseDescription">Description *</Label>
-              <Textarea
-                id="courseDescription"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="courseCategory">Category *</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
-                required
-              >
-                <SelectTrigger id="courseCategory">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
+              <FormControl fullWidth required variant="outlined" margin="normal">
+                <InputLabel id="courseCategory-label">Category</InputLabel>
+                <Select
+                  labelId="courseCategory-label"
+                  id="courseCategory"
+                  value={formData.category}
+                  label="Category"
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                >
                   {user?.category.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
+                    <MenuItem key={cat} value={cat}>
                       {cat}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="courseLevel">Level *</Label>
-              <Select
-                value={formData.level}
-                onValueChange={(value) => setFormData({ ...formData, level: value })}
-                required
-              >
-                <SelectTrigger id="courseLevel">
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Beginner">Beginner</SelectItem>
-                  <SelectItem value="Intermediate">Intermediate</SelectItem>
-                  <SelectItem value="Advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="coursePrice">Price (₹) *</Label>
-              <Input
+                </Select>
+              </FormControl>
+            </Box>
+            <TextField
+              id="courseDescription"
+              label="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              multiline
+              required
+              fullWidth
+            />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FormControl fullWidth required>
+                <InputLabel id="courseLevel-label">Level</InputLabel>
+                <Select
+                  labelId="courseLevel-label"
+                  id="courseLevel"
+                  value={formData.level}
+                  label="Level"
+                  onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                >
+                  <MenuItem value="Beginner">Beginner</MenuItem>
+                  <MenuItem value="Intermediate">Intermediate</MenuItem>
+                  <MenuItem value="Advanced">Advanced</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
                 id="coursePrice"
+                label="Price (₹)"
                 type="number"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 required
+                fullWidth
               />
-            </div>
-            <div>
-              <Label htmlFor="courseDuration">Duration (hours) *</Label>
-              <Input
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
                 id="courseDuration"
+                label="Duration (hours)"
                 type="number"
                 value={formData.duration}
                 onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                 required
+                fullWidth
               />
-            </div>
-            <div>
-              <Label htmlFor="courseThumbnail">Thumbnail URL</Label>
-              <Input
-                id="courseThumbnail"
-                type="url"
-                value={formData.thumbnail}
-                onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-            <div>
-              <Label htmlFor="courseDiscount">Discount (%)</Label>
-              <Input
+              <TextField
                 id="courseDiscount"
+                label="Discount (%)"
                 type="number"
                 value={formData.discount}
                 onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
                 placeholder="0"
+                fullWidth
               />
-            </div>
-          </div>
+            </Box>
+            <TextField
+              id="courseThumbnail"
+              label="Thumbnail URL"
+              type="url"
+              value={formData.thumbnail}
+              onChange={(e) => setFormData({ ...formData, thumbnail: e.target.value })}
+              placeholder="https://..."
+              fullWidth
+            />
+          </Box>
         </CustomDialogContent>
-        <CustomDialogFooter className="mt-6">
+        <CustomDialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
