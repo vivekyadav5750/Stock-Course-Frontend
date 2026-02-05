@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import {
     userLogin,
     userRegister,
@@ -10,9 +10,9 @@ import {
     resetPassword,
     changePassword,
     updateUserProfile as updateUserProfileAction,
-    User,
 } from '@/redux/slice/user';
 import { toast } from 'sonner';
+import { User_Types } from '@/types';
 
 /**
  * Custom hook to use Redux auth state and actions
@@ -108,7 +108,7 @@ export const useAuth = () => {
         }
     };
 
-    const updateUserProfile = async (data: Partial<User>) => {
+    const updateUserProfile = async (data: Partial<User_Types>) => {
         try {
             const result = await dispatch(updateUserProfileAction(data)).unwrap();
             await dispatch(getUser()).unwrap(); // Refresh user data

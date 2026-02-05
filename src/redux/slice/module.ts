@@ -1,38 +1,18 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "@/lib/axios";
 import { getErrorMessage } from "@/lib/utils";
+import { Module_Types } from "@/types";
 
-export type Module = {
-  _id?: string;
-  id?: string;
-  title: string;
-  description?: string;
-  courseId: string;
-  order: number;
-  lessons?: string[];
-  duration?: number;
-  isPublished?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  category?: string;
-};
+
 
 type ModuleState = {
-  modules: Module[];
-  currentModule: Module | null;
+  modules: Module_Types[];
+  currentModule: Module_Types | null;
   status: "idle" | "loading" | "success" | "failed";
   message: string;
 };
 
-export type CreateModuleData = {
-  title: string;
-  description?: string;
-  courseId: string;
-  category?: string;
-  order: number;
-};
-
-export type UpdateModuleData = Partial<Omit<CreateModuleData, 'courseId'>>;
+export type UpdateModuleData = Partial<Omit<Module_Types, 'courseId'>>;
 
 const initialState: ModuleState = {
   modules: [],
@@ -91,7 +71,7 @@ export const getAllModules = createAsyncThunk(
 // Create new module (admin)
 export const createModule = createAsyncThunk(
   "module/create",
-  async (data: CreateModuleData, { rejectWithValue }) => {
+  async (data: Partial<Module_Types>, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post("/module", data);
 

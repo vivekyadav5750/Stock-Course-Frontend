@@ -1,57 +1,16 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axiosInstance from "@/lib/axios";
 import { getErrorMessage } from "@/lib/utils";
-import { CONTENT_TYPES } from "@/types";
-
-export type Lesson = {
-  _id?: string;
-  id?: string;
-  title: string;
-  description?: string;
-  moduleId: string;
-  courseId: string;
-  order: number;
-  contentType: typeof CONTENT_TYPES[keyof typeof CONTENT_TYPES];
-  videoUrl?: string;
-  pdfUrl?: string;
-  textContent?: string;
-  duration?: number;
-  content?: string;
-  resources?: {
-    title: string;
-    url: string;
-    type: string;
-  }[];
-  isPublished?: boolean;
-  isPreview?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  category?: string;
-};
+import { Lesson_Types } from "@/types";
 
 type LessonState = {
-  lessons: Lesson[];
-  currentLesson: Lesson | null;
+  lessons: Lesson_Types[];
+  currentLesson: Lesson_Types | null;
   status: "idle" | "loading" | "success" | "failed";
   message: string;
 };
 
-export type CreateLessonData = {
-  title: string;
-  description?: string;
-  moduleId: string;
-  courseId: string;
-  category?: string;
-  order: number;
-  contentType: typeof CONTENT_TYPES[keyof typeof CONTENT_TYPES];
-  videoUrl?: string;
-  pdfUrl?: string;
-  textContent?: string;
-  content?: string;
-  isPreview?: boolean;
-};
-
-export type UpdateLessonData = Partial<Omit<CreateLessonData, 'moduleId' | 'courseId'>>;
+export type UpdateLessonData = Partial<Omit<Lesson_Types, 'moduleId' | 'courseId'>>;
 
 const initialState: LessonState = {
   lessons: [],
@@ -59,15 +18,6 @@ const initialState: LessonState = {
   status: "idle",
   message: "",
 };
-
-// Helper to normalize lesson data
-// const normalizeLesson = (lesson: any): Lesson => {
-//   if (!lesson) return lesson;
-//   return {
-//     ...lesson,
-//     id: lesson._id || lesson.id,
-//   };
-// };
 
 // admin 
 // Get all lessons for a module
@@ -120,7 +70,7 @@ export const getAllLessons = createAsyncThunk(
 // Create new lesson (admin)
 export const createLesson = createAsyncThunk(
   "lesson/create",
-  async (data: CreateLessonData, { rejectWithValue }) => {
+  async (data: Lesson_Types, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post("/lesson", data);
 

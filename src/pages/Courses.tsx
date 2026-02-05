@@ -15,18 +15,18 @@ const Courses = () => {
 
   // Fetch courses on component mount
   useEffect(() => {
-    dispatch(getCourse({ 
-      page: 0, 
+    dispatch(getCourse({
+      page: 0,
       limit: 100,
       category: activeTab !== 'all' ? activeTab : undefined
     }));
   }, [dispatch, activeTab]);
 
   // Filter courses based on active tab
-  const filteredCourses = activeTab === 'all' 
-    ? courses 
+  const filteredCourses = activeTab === 'all'
+    ? courses
     : courses.filter(course => course.level?.toLowerCase() === activeTab);
-  
+
   // Animation variants
   const containerVariants = {
     hidden: {},
@@ -39,8 +39,8 @@ const Courses = () => {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: {
         type: "spring",
@@ -53,7 +53,7 @@ const Courses = () => {
     <div className="min-h-screen pt-24 pb-16">
       <div className="container px-4 mx-auto">
         <div className="max-w-2xl mx-auto text-center mb-12">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -61,7 +61,7 @@ const Courses = () => {
           >
             Explore Our Courses
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -101,18 +101,18 @@ const Courses = () => {
                     <TabsTrigger value="advanced">Advanced</TabsTrigger>
                   </TabsList>
                 </div>
-                
+
                 <div className="mt-8">
                   <TabsContent value="all" className="mt-0">
                     {filteredCourses.length > 0 ? (
-                      <motion.div 
+                      <motion.div
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                       >
                         {filteredCourses.map(course => (
-                          <motion.div key={course.id} variants={itemVariants}>
+                          <motion.div key={course._id} variants={itemVariants}>
                             <CourseCard course={course} />
                           </motion.div>
                         ))}
@@ -121,17 +121,17 @@ const Courses = () => {
                       <p className="text-center text-muted-foreground py-8">No courses available</p>
                     )}
                   </TabsContent>
-                  
+
                   <TabsContent value="beginner" className="mt-0">
                     {filteredCourses.length > 0 ? (
-                      <motion.div 
+                      <motion.div
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                       >
                         {filteredCourses.map(course => (
-                          <motion.div key={course.id} variants={itemVariants}>
+                          <motion.div key={course._id} variants={itemVariants}>
                             <CourseCard course={course} />
                           </motion.div>
                         ))}
@@ -140,17 +140,17 @@ const Courses = () => {
                       <p className="text-center text-muted-foreground py-8">No basic courses available</p>
                     )}
                   </TabsContent>
-                  
+
                   <TabsContent value="intermediate" className="mt-0">
                     {filteredCourses.length > 0 ? (
-                      <motion.div 
+                      <motion.div
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                       >
                         {filteredCourses.map(course => (
-                          <motion.div key={course.id} variants={itemVariants}>
+                          <motion.div key={course._id} variants={itemVariants}>
                             <CourseCard course={course} />
                           </motion.div>
                         ))}
@@ -159,17 +159,17 @@ const Courses = () => {
                       <p className="text-center text-muted-foreground py-8">No intermediate courses available</p>
                     )}
                   </TabsContent>
-                  
+
                   <TabsContent value="advanced" className="mt-0">
                     {filteredCourses.length > 0 ? (
-                      <motion.div 
+                      <motion.div
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                       >
                         {filteredCourses.map(course => (
-                          <motion.div key={course.id} variants={itemVariants}>
+                          <motion.div key={course._id} variants={itemVariants}>
                             <CourseCard course={course} />
                           </motion.div>
                         ))}

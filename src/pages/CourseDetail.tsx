@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { Course_Types } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -201,9 +200,8 @@ const CourseDetail = () => {
                           </p>
                         </div>
                         <ChevronDown
-                          className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
-                            isOpen ? "rotate-180" : ""
-                          }`}
+                          className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                            }`}
                         />
                       </button>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import {
   getAllCourses,
   createCourse,
@@ -22,11 +22,6 @@ import {
   updateLesson,
   deleteLesson,
   togglePublishLesson,
-} from "@/redux/slice/lesson";
-import type { Module } from "@/redux/slice/module";
-import type {
-  Lesson,
-  CreateLessonData as LessonCreateData,
 } from "@/redux/slice/lesson";
 import { CONTENT_TYPES, Course_Types } from "@/types";
 import { CourseForm } from "@/components/CourseForm";
@@ -255,7 +250,7 @@ const CourseManagement = () => {
   //Handle selected course
 
   const handleCourseSelect = (course: Course_Types) => {
-    const courseId = course.id ?? course._id;
+    const courseId = course._id;
 
     if (!courseId) return;
 
@@ -307,7 +302,7 @@ const CourseManagement = () => {
     if (!selectedCourse) return;
 
     try {
-      const courseId = selectedCourse.id || selectedCourse._id;
+      const courseId = selectedCourse._id;
       if (!courseId) return;
 
       const updatedCourse = await dispatch(
@@ -338,7 +333,7 @@ const CourseManagement = () => {
 
     try {
       await dispatch(deleteCourse(courseId)).unwrap();
-      if (selectedCourse?.id === courseId || selectedCourse?._id === courseId) {
+      if (selectedCourse?._id === courseId) {
         setSelectedCourse(null);
       }
       toast.success("Course deleted successfully");
@@ -589,7 +584,7 @@ const CourseManagement = () => {
   const openEditCourseDialog = (course: Course_Types) => {
     setCourseForm({
       ...courseForm,
-      _id: course._id || course.id,
+      _id: course._id,
       title: course.title,
       description: course.description,
       category: course.category || "",
@@ -729,8 +724,8 @@ const CourseManagement = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courses.map((course) => {
-                  const courseId = course.id || course._id;
-                  const selectedId = selectedCourse?.id || selectedCourse?._id;
+                  const courseId = course._id;
+                  const selectedId = selectedCourse?._id;
                   return (
                     <motion.div
                       key={courseId}
@@ -738,9 +733,8 @@ const CourseManagement = () => {
                       animate={{ opacity: 1, y: 0 }}
                     >
                       <Card
-                        className={`cursor-pointer transition-all ${
-                          selectedId === courseId ? "ring-2 ring-primary" : ""
-                        }`}
+                        className={`cursor-pointer transition-all ${selectedId === courseId ? "ring-2 ring-primary" : ""
+                          }`}
                         onClick={() => handleCourseSelect(course)}
                       >
                         {course.thumbnail && (
@@ -833,8 +827,7 @@ const CourseManagement = () => {
                         setNewModuleDialog(open);
 
                         if (open && selectedCourse) {
-                          const courseId =
-                            selectedCourse.id || selectedCourse._id;
+                          const courseId = selectedCourse._id;
 
                           setModuleForm((prev) => ({
                             ...prev,
@@ -857,7 +850,7 @@ const CourseManagement = () => {
                         <ModuleForm
                           module={null}
                           courses={courses}
-                          selectedCourse={selectedCourse} 
+                          selectedCourse={selectedCourse}
                           userCategories={user?.category || []}
                           modulesCount={modules.length}
                           onSubmit={handleCreateModule}
@@ -891,7 +884,7 @@ const CourseManagement = () => {
                         <SelectContent>
                           <SelectItem value="none">All courses</SelectItem>
                           {courses.map((course) => {
-                            const courseId = course.id || course._id;
+                            const courseId = course._id;
                             if (!courseId) return null;
                             return (
                               <SelectItem key={courseId} value={courseId}>
@@ -1007,7 +1000,7 @@ const CourseManagement = () => {
                                     course.category === moduleForm.category,
                                 )
                                 .map((course) => {
-                                  const courseId = course.id || course._id;
+                                  const courseId = course._id;
                                   if (!courseId) return null;
                                   return (
                                     <SelectItem key={courseId} value={courseId}>
@@ -1064,7 +1057,7 @@ const CourseManagement = () => {
                     {[...modules]
                       .sort((a, b) => a.order - b.order)
                       .map((module, index) => {
-                        const moduleId = module.id || module._id;
+                        const moduleId = module._id;
                         return (
                           <Card key={moduleId}>
                             <CardHeader>
@@ -1195,7 +1188,7 @@ const CourseManagement = () => {
                       <SelectContent>
                         <SelectItem value="none">All courses</SelectItem>
                         {courses.map((course) => {
-                          const courseId = course.id || course._id;
+                          const courseId = course._id;
                           if (!courseId) return null;
                           return (
                             <SelectItem key={courseId} value={courseId}>
@@ -1225,7 +1218,7 @@ const CourseManagement = () => {
                       <SelectContent>
                         <SelectItem value="none">All modules</SelectItem>
                         {modules.map((module) => {
-                          const moduleId = module.id || module._id;
+                          const moduleId = module._id;
                           if (!moduleId) return null;
                           return (
                             <SelectItem key={moduleId} value={moduleId}>
@@ -1280,7 +1273,7 @@ const CourseManagement = () => {
                     {[...lessons]
                       .sort((a, b) => a.order - b.order)
                       .map((lesson) => {
-                        const lessonId = lesson.id || lesson._id;
+                        const lessonId = lesson._id;
                         return (
                           <Card key={lessonId}>
                             <CardHeader>
@@ -1332,8 +1325,8 @@ const CourseManagement = () => {
                                     size="sm"
                                     variant="outline"
                                     onClick={() =>
-                                      lessonId &&
-                                      handleTogglePublishLesson(lessonId)
+                                      lesson._id &&
+                                      handleTogglePublishLesson(lesson._id)
                                     }
                                   >
                                     {lesson.isPublished ? (
@@ -1346,7 +1339,7 @@ const CourseManagement = () => {
                                     size="sm"
                                     variant="destructive"
                                     onClick={() =>
-                                      lessonId && handleDeleteLesson(lessonId)
+                                      lesson._id && handleDeleteLesson(lesson._id)
                                     }
                                   >
                                     <Trash2 className="h-4 w-4" />
