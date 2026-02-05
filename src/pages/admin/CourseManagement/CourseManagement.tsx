@@ -25,13 +25,13 @@ const CourseManagement = () => {
   const dispatch = useAppDispatch();
 
   // Redux state
-  const { courses, status: courseStatus } = useAppSelector(
+  const { courses } = useAppSelector(
     (state) => state.course,
   );
-  const { modules, status: moduleStatus } = useAppSelector(
+  const { modules } = useAppSelector(
     (state) => state.module,
   );
-  const { lessons, status: lessonStatus } = useAppSelector(
+  const { lessons } = useAppSelector(
     (state) => state.lesson,
   );
 
@@ -176,9 +176,9 @@ const CourseManagement = () => {
             <TabsTrigger value="lessons">Lessons</TabsTrigger>
           </TabsList>
 
-          {/* Category Filter */}
-          <div className="mb-6 flex gap-4 items-end">
-            <div className="w-64">
+          {/* Filters */}
+          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 items-end">
+            <div>
               <Label htmlFor="courseCategory">Filter by Category</Label>
               <Select
                 value={filter.category}
@@ -190,23 +190,16 @@ const CourseManagement = () => {
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {user?.category &&
-                    user?.category?.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
+                  {user?.category?.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          {/* Course Filters */}
-          <div className="flex gap-4 items-end">
-            <div className="w-64">
-              <Label htmlFor="moduleCourse">
-                Filter by Course (Optional)
-              </Label>
+            <div>
+              <Label htmlFor="moduleCourse">Filter by Course (Optional)</Label>
               <Select
                 value={filter.courseId || "none"}
                 onValueChange={(value) =>
@@ -233,38 +226,34 @@ const CourseManagement = () => {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          {/* Module Filters */}
-          <div className="w-64">
-            <Label htmlFor="lessonModule">
-              Filter by Module (Optional)
-            </Label>
-            <Select
-              value={filter.moduleId || "none"}
-              onValueChange={(value) =>
-                setFilter({
-                  ...filter,
-                  moduleId: value === "none" ? "" : value,
-                })
-              }
-            >
-              <SelectTrigger id="lessonModule">
-                <SelectValue placeholder="All modules" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">All modules</SelectItem>
-                {modules.map((module) => {
-                  const moduleId = module._id;
-                  if (!moduleId) return null;
-                  return (
-                    <SelectItem key={moduleId} value={moduleId}>
-                      {module.title}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+            <div>
+              <Label htmlFor="lessonModule">Filter by Module (Optional)</Label>
+              <Select
+                value={filter.moduleId || "none"}
+                onValueChange={(value) =>
+                  setFilter({
+                    ...filter,
+                    moduleId: value === "none" ? "" : value,
+                  })
+                }
+              >
+                <SelectTrigger id="lessonModule">
+                  <SelectValue placeholder="All modules" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">All modules</SelectItem>
+                  {modules.map((module) => {
+                    const moduleId = module._id;
+                    if (!moduleId) return null;
+                    return (
+                      <SelectItem key={moduleId} value={moduleId}>
+                        {module.title}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
 

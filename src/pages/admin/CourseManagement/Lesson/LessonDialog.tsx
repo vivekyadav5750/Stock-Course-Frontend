@@ -27,12 +27,6 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.user);
 
-  // const normalizeId = (value?: string | { _id?: string } | null) => {
-  //   console.log("normalizeId", value)
-  //   if (typeof value === 'string') return value;
-  //   return value?._id || '';
-  // };
-
   const [formData, setFormData] = useState({
     category: data?.category || filter?.category || '',
     moduleId: data?.moduleId || filter?.moduleId || '',
@@ -75,6 +69,7 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
       toast.success(`Lesson ${data?._id ? 'updated' : 'created'} successfully`);
     }
     catch (error: any) {
+      console.log("heyy", error)
       toast.error(error || `Failed to ${data?._id ? 'update' : 'create'} lesson`);
       return;
     }
@@ -93,7 +88,7 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm" disableEnforceFocus key={data?._id ?? 'new'}>
+    <Dialog open onClose={onClose} fullWidth maxWidth="sm" disableEnforceFocus scroll="paper" key={data?._id ?? 'new'}>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <CustomDialogHeader
           title={data ? 'Update Lesson' : 'Create Lesson'}

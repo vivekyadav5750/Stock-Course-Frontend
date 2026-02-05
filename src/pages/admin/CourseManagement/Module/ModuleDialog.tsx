@@ -25,13 +25,6 @@ export const ModuleDialog = ({ data, courses, filter, onSubmit, onClose }: Modul
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.user);
 
-  // const normalizeId = (value?: string | { _id?: string } | null) => {
-  //   console.log("normalizeId", value)
-  //   if (typeof value === 'string') return value;
-  //   console.log("loll")
-  //   return value?._id || '';
-  // };
-
   const [formData, setFormData] = useState({
     title: data?.title || '',
     description: data?.description || '',
