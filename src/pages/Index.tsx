@@ -1,7 +1,6 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-// import { CourseLevel } from '@/lib/constants';
 import CourseCard from '@/components/CourseCard';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -68,7 +67,7 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-xl text-muted-foreground mb-8"
             >
-              Learn essential trading strategies from industry experts and transform your financial future.
+              Learn essential investment strategies from industry experts and transform your financial future.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -192,7 +191,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Expert Guidance</h3>
               <p className="text-muted-foreground">
-                Learn from seasoned traders who share practical insights and real-world applications of trading strategies.
+                Learn from seasoned traders who share practical insights and real-world applications of investment strategies.
               </p>
             </motion.div>
 
@@ -216,7 +215,7 @@ const Index = () => {
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container px-4 mx-auto">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-6">Ready to Transform Your Trading Skills?</h2>
+            <h2 className="text-3xl font-bold mb-6">Ready to Transform Your Investment Skills?</h2>
             <p className="text-xl opacity-90 mb-8">
               Join thousands of successful traders who have mastered the market with our comprehensive courses.
             </p>

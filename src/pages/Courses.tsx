@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-// import { CourseLevel } from '@/lib/constants';?
 import CourseCard from '@/components/CourseCard';
 import { Button } from '@/components/ui/button';
 import { TabsContent, Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
