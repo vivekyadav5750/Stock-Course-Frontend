@@ -1,10 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Box, Dialog } from '@mui/material';
+import { useState } from 'react';
+import { Box, Dialog, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import CustomDialogContent from '@/components/CustomDialog/CustomDialogContent';
 import CustomDialogFooter from '@/components/CustomDialog/CustomDialogFooter';
@@ -88,190 +84,183 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
   });
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm" disableEnforceFocus scroll="paper" key={data?._id ?? 'new'}>
+    <Dialog open={true} onClose={onClose} fullWidth maxWidth="md" key={data?._id ?? 'new'}>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <CustomDialogHeader
           title={data ? 'Update Lesson' : 'Create Lesson'}
           onClose={onClose}
         />
         <CustomDialogContent>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="lessonCategory">Category *</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value, moduleId: '' })}
-                required
-              >
-                <SelectTrigger id="lessonCategory">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }} margin="normal">
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FormControl fullWidth required variant="outlined" margin="normal">
+                <InputLabel id="lessonCategory-label">Category</InputLabel>
+                <Select
+                  labelId="lessonCategory-label"
+                  id="lessonCategory"
+                  value={formData.category}
+                  label="Category"
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value, moduleId: '' })}
+                >
                   {user?.category.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
+                    <MenuItem key={cat} value={cat}>
                       {cat}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="lessonCourse">Course *</Label>
-              <Select
-                value={formData.courseId}
-                onValueChange={(value) => setFormData({ ...formData, courseId: value, moduleId: '' })}
-                required
-              >
-                <SelectTrigger id="lessonCourse">
-                  <SelectValue placeholder="Select a course" />
-                </SelectTrigger>
-                <SelectContent>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth required variant="outlined" margin="normal">
+                <InputLabel id="lessonCourse-label">Course</InputLabel>
+                <Select
+                  labelId="lessonCourse-label"
+                  id="lessonCourse"
+                  value={formData.courseId}
+                  label="Course"
+                  onChange={(e) => setFormData({ ...formData, courseId: e.target.value, moduleId: '' })}
+                >
                   {courses
                     .filter((course) => !formData.category || course.category === formData.category)
                     .map((course) => {
                       const courseId = course._id;
                       if (!courseId) return null;
                       return (
-                        <SelectItem key={courseId} value={courseId}>
+                        <MenuItem key={courseId} value={courseId}>
                           {course.title}
-                        </SelectItem>
+                        </MenuItem>
                       );
                     })}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="lessonModule">Module *</Label>
-              <Select
-                value={formData.moduleId}
-                onValueChange={(value) => {
-                  // Extract courseId from selected module
-                  const selectedModule = modules.find(m => (m._id) === value);
-                  const courseId = selectedModule?.courseId || (selectedModule?.courseId as any)?._id || '';
-                  setFormData({ ...formData, moduleId: value, courseId });
-                }}
-                required
-              >
-                <SelectTrigger id="lessonModule">
-                  <SelectValue placeholder="Select a module" />
-                </SelectTrigger>
-                <SelectContent>
+                </Select>
+              </FormControl>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FormControl fullWidth required>
+                <InputLabel id="lessonModule-label">Module</InputLabel>
+                <Select
+                  labelId="lessonModule-label"
+                  id="lessonModule"
+                  value={formData.moduleId}
+                  label="Module"
+                  onChange={(e) => {
+                    const selectedModule = modules.find((m) => m._id === e.target.value);
+                    const courseId = selectedModule?.courseId || (selectedModule?.courseId as any)?._id || '';
+                    setFormData({ ...formData, moduleId: e.target.value, courseId });
+                  }}
+                >
                   {filteredModules.map((module) => {
                     const moduleId = module._id;
                     if (!moduleId) return null;
                     return (
-                      <SelectItem key={moduleId} value={moduleId}>
+                      <MenuItem key={moduleId} value={moduleId}>
                         {module.title}
-                      </SelectItem>
+                      </MenuItem>
                     );
                   })}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="lessonTitle">Title *</Label>
-              <Input
+                </Select>
+              </FormControl>
+              <TextField
                 id="lessonTitle"
+                label="Title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
+                fullWidth
               />
-            </div>
-            <div>
-              <Label htmlFor="lessonDescription">Description</Label>
-              <Textarea
-                id="lessonDescription"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-              />
-            </div>
-            <div>
-              <Label htmlFor="lessonContentType">Content Type *</Label>
+            </Box>
+            <TextField
+              id="lessonDescription"
+              label="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              multiline
+              fullWidth
+            />
+            <FormControl fullWidth required>
+              <InputLabel id="lessonContentType-label">Content Type</InputLabel>
               <Select
+                labelId="lessonContentType-label"
+                id="lessonContentType"
                 value={formData.contentType}
-                onValueChange={(value: typeof CONTENT_TYPES[keyof typeof CONTENT_TYPES]) => setFormData({ ...formData, contentType: value })}
-                required
+                label="Content Type"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    contentType: e.target.value as typeof CONTENT_TYPES[keyof typeof CONTENT_TYPES],
+                  })
+                }
               >
-                <SelectTrigger id="lessonContentType">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={CONTENT_TYPES.VIDEO}>Video</SelectItem>
-                  <SelectItem value={CONTENT_TYPES.PDF}>PDF</SelectItem>
-                  <SelectItem value={CONTENT_TYPES.TEXT}>Text</SelectItem>
-                </SelectContent>
+                <MenuItem value={CONTENT_TYPES.VIDEO}>Video</MenuItem>
+                <MenuItem value={CONTENT_TYPES.PDF}>PDF</MenuItem>
+                <MenuItem value={CONTENT_TYPES.TEXT}>Text</MenuItem>
               </Select>
-            </div>
+            </FormControl>
             {formData.contentType === CONTENT_TYPES.VIDEO && (
-              <div>
-                <Label htmlFor="lessonVideoUrl">Video URL *</Label>
-                <Input
-                  id="lessonVideoUrl"
-                  type="url"
-                  value={formData.videoUrl}
-                  onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                  placeholder="https://..."
-                  required
-                />
-              </div>
+              <TextField
+                id="lessonVideoUrl"
+                label="Video URL"
+                type="url"
+                value={formData.videoUrl}
+                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                placeholder="https://..."
+                required
+                fullWidth
+              />
             )}
             {formData.contentType === CONTENT_TYPES.PDF && (
-              <div>
-                <Label htmlFor="lessonPdfUrl">PDF URL *</Label>
-                <Input
-                  id="lessonPdfUrl"
-                  type="url"
-                  value={formData.pdfUrl}
-                  onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })}
-                  placeholder="https://..."
-                  required
-                />
-              </div>
+              <TextField
+                id="lessonPdfUrl"
+                label="PDF URL"
+                type="url"
+                value={formData.pdfUrl}
+                onChange={(e) => setFormData({ ...formData, pdfUrl: e.target.value })}
+                placeholder="https://..."
+                required
+                fullWidth
+              />
             )}
             {formData.contentType === CONTENT_TYPES.TEXT && (
-              <div>
-                <Label htmlFor="lessonTextContent">Text Content *</Label>
-                <Textarea
-                  id="lessonTextContent"
-                  value={formData.textContent}
-                  onChange={(e) => setFormData({ ...formData, textContent: e.target.value })}
-                  rows={6}
-                  required
-                />
-              </div>
+              <TextField
+                id="lessonTextContent"
+                label="Text Content"
+                value={formData.textContent}
+                onChange={(e) => setFormData({ ...formData, textContent: e.target.value })}
+                rows={6}
+                multiline
+                required
+                fullWidth
+              />
             )}
-            <div>
-              <Label htmlFor="lessonOrder">Order</Label>
-              <Input
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
                 id="lessonOrder"
+                label="Order"
                 type="number"
                 value={formData.order}
                 onChange={(e) => setFormData({ ...formData, order: e.target.value })}
                 placeholder={`1...`}
+                fullWidth
               />
-            </div>
-            <div>
-              <Label htmlFor="lessonDuration">Duration (minutes)</Label>
-              <Input
+              <TextField
                 id="lessonDuration"
+                label="Duration (minutes)"
                 type="number"
                 value={formData.duration}
                 onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                 placeholder="0"
+                fullWidth
               />
-            </div>
+            </Box>
             <div className="flex items-center space-x-2">
               <Switch
                 id="lessonPreview"
                 checked={formData.isPreview}
                 onCheckedChange={(checked) => setFormData({ ...formData, isPreview: checked })}
               />
-              <Label htmlFor="lessonPreview">Is Preview Lesson</Label>
+              <label htmlFor="lessonPreview">Is Preview Lesson</label>
             </div>
-          </div>
+          </Box>
         </CustomDialogContent>
-        <CustomDialogFooter className="mt-6">
+        <CustomDialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>

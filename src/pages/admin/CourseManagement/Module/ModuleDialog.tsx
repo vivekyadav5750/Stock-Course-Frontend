@@ -1,10 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Box, Dialog } from '@mui/material';
+import { Box, Dialog, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CustomDialogContent from '@/components/CustomDialog/CustomDialogContent';
 import CustomDialogFooter from '@/components/CustomDialog/CustomDialogFooter';
 import CustomDialogHeader from '@/components/CustomDialog/CustomDialogHeader';
@@ -69,89 +65,83 @@ export const ModuleDialog = ({ data, courses, filter, onSubmit, onClose }: Modul
   );
 
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm" disableEnforceFocus key={data?._id ?? 'new'}>
+    <Dialog open onClose={onClose} fullWidth maxWidth="md" disableEnforceFocus key={data?._id ?? 'new'}>
       <Box component="form" onSubmit={handleSubmit} noValidate>
         <CustomDialogHeader
           title={data?._id ? 'Update Module' : 'Create Module'}
           onClose={onClose}
         />
         <CustomDialogContent>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="moduleCategory">Category *</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value, courseId: '' })}
-                required
-              >
-                <SelectTrigger id="moduleCategory">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FormControl fullWidth required variant="outlined" margin="normal">
+                <InputLabel id="moduleCategory-label">Category</InputLabel>
+                <Select
+                  labelId="moduleCategory-label"
+                  id="moduleCategory"
+                  value={formData.category}
+                  label="Category"
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value, courseId: '' })}
+                >
                   {user?.category.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
+                    <MenuItem key={cat} value={cat}>
                       {cat}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="moduleCourseId">Course *</Label>
-              <Select
-                value={formData.courseId}
-                onValueChange={(value) => setFormData({ ...formData, courseId: value })}
-                required
-              >
-                <SelectTrigger id="moduleCourseId">
-                  <SelectValue placeholder="Select a course" />
-                </SelectTrigger>
-                <SelectContent>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth required variant="outlined" margin="normal">
+                <InputLabel id="moduleCourse-label">Course</InputLabel>
+                <Select
+                  labelId="moduleCourse-label"
+                  id="moduleCourseId"
+                  value={formData.courseId}
+                  label="Course"
+                  onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
+                >
                   {filteredCourses.map((course) => {
                     const courseId = course._id;
                     if (!courseId) return null;
                     return (
-                      <SelectItem key={courseId} value={courseId}>
+                      <MenuItem key={courseId} value={courseId}>
                         {course.title}
-                      </SelectItem>
+                      </MenuItem>
                     );
                   })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="moduleTitle">Title *</Label>
-              <Input
+                </Select>
+              </FormControl>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField
                 id="moduleTitle"
+                label="Title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
+                fullWidth
               />
-            </div>
-            <div>
-              <Label htmlFor="moduleDescription">Description</Label>
-              <Textarea
-                id="moduleDescription"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="moduleOrder">Order</Label>
-              <Input
+              <TextField
                 id="moduleOrder"
+                label="Order"
                 type="number"
                 value={formData.order}
                 onChange={(e) => setFormData({ ...formData, order: e.target.value })}
-                placeholder={`1..`}
+                placeholder="1.."
+                fullWidth
               />
-            </div>
-          </div>
+            </Box>
+            <TextField
+              id="moduleDescription"
+              label="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              multiline
+              fullWidth
+            />
+          </Box>
         </CustomDialogContent>
-        <CustomDialogFooter className="mt-6">
+        <CustomDialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
