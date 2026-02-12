@@ -65,8 +65,7 @@ export type Lesson_Types = {
   category?: string;
   order: number;
   contentType: typeof CONTENT_TYPES[keyof typeof CONTENT_TYPES];
-  videoUrl?: string;
-  pdfUrl?: string;
+  fileUrl?: string;
   textContent?: string;
   duration?: number;
   content?: string;
@@ -83,8 +82,7 @@ export type Lesson_Types = {
 };
 
 export const CONTENT_TYPES = {
-  VIDEO: "video",
-  PDF: "pdf",
+  FILE: "file",
   TEXT: "text",
 } as const;
 

@@ -48,7 +48,7 @@ export const getAllLessons = createAsyncThunk(
   }
 );
 
-// Get single lesson by ID
+// Get single lesson by ID stream /preview
 // export const getLessonById = createAsyncThunk(
 //   "lesson/getById",
 //   async (lessonId: string, { rejectWithValue }) => {
@@ -142,63 +142,6 @@ export const togglePublishLesson = createAsyncThunk(
     }
   }
 );
-
-// Mark lesson as completed
-// export const markLessonComplete = createAsyncThunk(
-//   "lesson/markComplete",
-//   async (lessonId: string, { rejectWithValue }) => {
-//     try {
-//       const response = await axiosInstance.post(`/lessons/${lessonId}/complete`);
-
-//       if (!response.data.success) {
-//         return rejectWithValue(response.data.message || "Failed to mark lesson as complete");
-//       }
-
-//       return lessonId;
-//     } catch (error: any) {
-//       const message = getErrorMessage(error, "Failed to mark lesson as complete");
-//       return rejectWithValue(message);
-//     }
-//   }
-// );
-
-// Get lesson progress
-// export const getLessonProgress = createAsyncThunk(
-//   "lesson/getProgress",
-//   async (courseId: string, { rejectWithValue }) => {
-//     try {
-//       const response = await axiosInstance.get(`/course/${courseId}/progress`);
-
-//       if (!response.data.success) {
-//         return rejectWithValue(response.data.message || "Failed to fetch progress");
-//       }
-
-//       return response.data.data;
-//     } catch (error: any) {
-//       const message = getErrorMessage(error, "Failed to fetch progress");
-//       return rejectWithValue(message);
-//     }
-//   }
-// );
-
-// Reorder lessons
-// export const reorderLessons = createAsyncThunk(
-//   "lesson/reorder",
-//   async ({ moduleId, lessonIds }: { moduleId: string; lessonIds: string[] }, { rejectWithValue }) => {
-//     try {
-//       const response = await axiosInstance.put(`/modules/${moduleId}/lessons/reorder`, { lessonIds });
-
-//       if (!response.data.success) {
-//         return rejectWithValue(response.data.message || "Failed to reorder lessons");
-//       }
-
-//       return response.data.data;
-//     } catch (error: any) {
-//       const message = getErrorMessage(error, "Failed to reorder lessons");
-//       return rejectWithValue(message);
-//     }
-//   }
-// );
 
 const lessonSlice = createSlice({
   name: "lesson",
@@ -316,48 +259,6 @@ const lessonSlice = createSlice({
         state.status = "failed";
         state.message = action.payload as string;
       })
-
-    // Mark Lesson Complete
-    // .addCase(markLessonComplete.pending, (state) => {
-    //   state.status = "loading";
-    //   state.message = "";
-    // })
-    // .addCase(markLessonComplete.fulfilled, (state, action) => {
-    //   state.status = "success";
-    //   state.message = "Lesson marked as complete";
-    // })
-    // .addCase(markLessonComplete.rejected, (state, action) => {
-    //   state.status = "failed";
-    //   state.message = action.payload as string;
-    // })
-
-    // Get Lesson Progress
-    // .addCase(getLessonProgress.pending, (state) => {
-    //   state.status = "loading";
-    //   state.message = "";
-    // })
-    // .addCase(getLessonProgress.fulfilled, (state, action) => {
-    //   state.status = "success";
-    // })
-    // .addCase(getLessonProgress.rejected, (state, action) => {
-    //   state.status = "failed";
-    //   state.message = action.payload as string;
-    // })
-
-    // Reorder Lessons
-    // .addCase(reorderLessons.pending, (state) => {
-    //   state.status = "loading";
-    //   state.message = "";
-    // })
-    // .addCase(reorderLessons.fulfilled, (state, action) => {
-    //   state.status = "success";
-    //   state.lessons = action.payload;
-    //   state.message = "Lessons reordered successfully";
-    // })
-    // .addCase(reorderLessons.rejected, (state, action) => {
-    //   state.status = "failed";
-    //   state.message = action.payload as string;
-    // });
   },
 });
 
