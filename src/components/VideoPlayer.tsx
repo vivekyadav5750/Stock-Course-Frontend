@@ -1,17 +1,64 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { getAccessToken } from '@/lib/axios';
 
 interface VideoPlayerProps {
   src: string;
   title: string;
+  lessonId?: string;
   onClose?: () => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onClose }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, lessonId, onClose }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [videoSrc, setVideoSrc] = useState('');
+  const [videoBlobUrl, setVideoBlobUrl] = useState<string>('');
+
+  // Fetch video with authorization and create blob URL
+  useEffect(() => {
+    const fetchVideo = async () => {
+      if (src.startsWith('/uploads/') && lessonId) {
+        try {
+          // Local upload - use protected streaming endpoint
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:2000/api';
+          const token = getAccessToken();
+
+          const response = await fetch(`${baseUrl}/lesson/stream/${lessonId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to load video');
+          }
+
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          setVideoBlobUrl(blobUrl);
+          setVideoSrc(blobUrl);
+        } catch (error) {
+          console.error('Error loading video:', error);
+          toast.error('Failed to load video');
+        }
+      } else {
+        // External URL - use as is
+        setVideoSrc(src);
+      }
+    };
+
+    fetchVideo();
+
+    // Cleanup blob URL when component unmounts
+    return () => {
+      if (videoBlobUrl) {
+        URL.revokeObjectURL(videoBlobUrl);
+      }
+    };
+  }, [src, lessonId]);
 
   // Handle protection against screenshots and recording
   useEffect(() => {
@@ -96,10 +143,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, title, onClose }) => {
           </button>
         )}
       </div>
-      
+
       <video
         ref={videoRef}
-        src={src}
+        src={videoSrc}
         className="w-full h-full"
         controls
         controlsList="nodownload nofullscreen"

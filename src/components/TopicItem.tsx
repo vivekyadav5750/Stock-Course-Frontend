@@ -1,15 +1,14 @@
 
 import React from 'react';
-import { Topic } from '@/lib/constants';
 import { PlayCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
 interface TopicItemProps {
-  topic: Topic;
+  topic: any;
   index: number;
   isUnlocked: boolean;
-  onPlayVideo: (topic: Topic) => void;
+  onPlayVideo: (topic: any) => void;
 }
 
 const TopicItem: React.FC<TopicItemProps> = ({ topic, index, isUnlocked, onPlayVideo }) => {
