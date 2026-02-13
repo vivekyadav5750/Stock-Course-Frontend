@@ -4,28 +4,19 @@ import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import TopicItem from "@/components/TopicItem";
-import VideoPlayer from "@/components/VideoPlayer";
+import PreviewLessonDialog from "@/components/Preview/PreviewLessonDialog";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
 import { getCourseById } from "@/redux/slice/course";
-// import { getLessonById } from "@/redux/slice/lesson";
 
 const CourseDetail = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
-  const [activeVideo, setActiveVideo] = useState<any | null>(null);
-  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [activeLesson, setActiveLesson] = useState<any | null>(null);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [openModuleId, setOpenModuleId] = useState<string | null>(null);
-  const [loadingLesson, setLoadingLesson] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -34,8 +25,6 @@ const CourseDetail = () => {
     status,
     message,
   } = useAppSelector((state) => state.course);
-
-  const { currentLesson } = useAppSelector((state) => state.lesson);
 
   // Fetch course data
   useEffect(() => {
@@ -82,28 +71,9 @@ const CourseDetail = () => {
       return;
     }
 
-    setLoadingLesson(true);
-    setVideoModalOpen(true);
-
-    try {
-      // Fetch lesson with authorization check
-      // await dispatch(getLessonById(topic._id)).unwrap();
-      // The lesson will be set in Redux state and we'll get it from currentLesson
-    } catch (error: any) {
-      console.error("Failed to load lesson:", error);
-      toast.error(error || "Failed to load lesson. Please check your access.");
-      setVideoModalOpen(false);
-    } finally {
-      setLoadingLesson(false);
-    }
+    setActiveLesson(topic);
+    setPreviewModalOpen(true);
   };
-
-  // Update activeVideo when currentLesson changes
-  useEffect(() => {
-    if (currentLesson && videoModalOpen) {
-      setActiveVideo(currentLesson);
-    }
-  }, [currentLesson, videoModalOpen]);
 
   if (status === "loading") {
     return (
@@ -268,37 +238,16 @@ const CourseDetail = () => {
         </div>
       </div>
 
-      {/* Video Modal */}
-      <Dialog open={videoModalOpen} onOpenChange={setVideoModalOpen}>
-        <DialogContent className="max-w-4xl w-full p-0 bg-black">
-          <DialogHeader className="p-4">
-            <DialogTitle className="text-white">
-              {activeVideo?.title || "Loading..."}
-            </DialogTitle>
-            <DialogDescription className="text-white/70">
-              {activeVideo?.description || ""}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="w-full">
-            {loadingLesson ? (
-              <div className="aspect-video flex items-center justify-center text-white/80">
-                <div className="animate-pulse">Loading lesson...</div>
-              </div>
-            ) : activeVideo?.videoUrl ? (
-              <VideoPlayer
-                src={activeVideo.videoUrl}
-                title={activeVideo.title}
-                lessonId={activeVideo._id}
-                onClose={() => setVideoModalOpen(false)}
-              />
-            ) : (
-              <div className="aspect-video flex items-center justify-center text-white/80">
-                No video available
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Lesson Preview Modal */}
+      {previewModalOpen && activeLesson && (
+        <PreviewLessonDialog
+          lesson={activeLesson}
+          onClose={() => {
+            setPreviewModalOpen(false);
+            setActiveLesson(null);
+          }}
+        />
+      )}
     </div>
   );
 };

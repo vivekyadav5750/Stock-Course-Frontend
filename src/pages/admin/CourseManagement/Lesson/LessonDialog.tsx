@@ -7,7 +7,7 @@ import CustomDialogFooter from '@/components/CustomDialog/CustomDialogFooter';
 import CustomDialogHeader from '@/components/CustomDialog/CustomDialogHeader';
 import { CONTENT_TYPES, Lesson_Types, Module_Types, Course_Types } from '@/types';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
-import { createLesson, updateLesson } from '@/redux/slice/lesson';
+import { createLesson, getAllLessons, updateLesson } from '@/redux/slice/lesson';
 import { toast } from "sonner";
 import axiosInstance from '@/lib/axios';
 import { validateFileUpload } from '@/utils/fileUploadValidation';
@@ -64,7 +64,7 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
     // Validate file size
     const fileSizeMB = selectedFile.size / (1024 * 1024);
     const maxSizeMB = isVideo ? 500 : isPdf ? 50 : 10; // 500MB for video, 50MB for PDF, 10MB for images
-    
+
     if (fileSizeMB > maxSizeMB) {
       toast.error(`File size must be less than ${maxSizeMB} MB`);
       return;
@@ -141,7 +141,7 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
       }
 
       // Validate content
-      if (formData.contentType === CONTENT_TYPES.FILE && !file && !formData.fileUrl) {
+      if (formData.contentType === CONTENT_TYPES.FILE && !file && !formData.fileUrl && !data?._id) {
         toast.error('Please select a file');
         setIsUploading(false);
         return;
@@ -204,6 +204,8 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
         }
       }
 
+      await dispatch(getAllLessons(filter)).unwrap();
+
       toast.success(`Lesson ${data?._id ? 'updated' : 'created'} successfully`);
       onClose();
       onSubmit();
@@ -220,7 +222,7 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
   // Filter modules by category only
   const filteredModules = modules.filter((module) => {
     if (formData.category) {
-      return module.category === formData.category;
+      return module.category === formData.category && module.courseId === formData.courseId;
     }
     return true;
   });
