@@ -133,13 +133,30 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
     try {
       setIsUploading(true);
 
-      // Validate file if uploading
-      if (file) {
-        const isValid = validateFileUpload(file, user, dispatch, (message: string) => toast.error(message));
-        if (!isValid) {
-          setIsUploading(false);
-          return;
-        }
+      // Validate required fields
+      if (!formData.category || !formData.courseId || !formData.moduleId || !formData.title.trim() || !formData.description.trim()) {
+        toast.error('Please fill all required fields');
+        setIsUploading(false);
+        return;
+      }
+
+      // Validate content
+      if (formData.contentType === CONTENT_TYPES.FILE && !file && !formData.fileUrl) {
+        toast.error('Please select a file');
+        setIsUploading(false);
+        return;
+      }
+
+      if (formData.contentType === CONTENT_TYPES.TEXT && !formData.textContent.trim()) {
+        toast.error('Please enter text content');
+        setIsUploading(false);
+        return;
+      }
+
+      // Validate file
+      if (file && !validateFileUpload(file, user, dispatch, (message: string) => toast.error(message))) {
+        setIsUploading(false);
+        return;
       }
 
       const payload = {
@@ -299,6 +316,7 @@ export const LessonDialog = ({ data, modules, courses, filter, onSubmit, onClose
               rows={3}
               multiline
               fullWidth
+              required
             />
             <FormControl fullWidth required>
               <InputLabel id="lessonContentType-label">Content Type</InputLabel>
