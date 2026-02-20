@@ -4,8 +4,9 @@ import { Download, File } from 'lucide-react';
 import { renderTextFileFromUrl } from './utils';
 import { Button } from '@mui/material';
 import { toast } from 'sonner';
-import { getErrorMessage } from '@/lib/error-handler';
+import { getErrorMessage } from '@/lib/utils';
 import { Lesson_Types } from '@/types';
+import { buildAuthenticatedVideoUrl } from '@/utils';
 
 function isImageFile(filename: string): boolean {
     if (!filename) return false;
@@ -45,10 +46,15 @@ const LessonPreview = ({ lesson }: LessonPreviewProps) => {
 
     useEffect(() => {
         const fileName = lesson.fileUrl || lesson.title || '';
-        console.log('Determining file type for:', fileName);
 
         if (!isImageFile(fileName) && !isPdf(fileName) && !isTextFile(fileName) && !isVideoFile(fileName) && !isAudioFile(fileName)) {
             setUrl('undefined');
+            return;
+        }
+
+        // For video files, use direct streaming URL instead of blob
+        if (isVideoFile(fileName)) {
+            setUrl(buildAuthenticatedVideoUrl(lesson._id));
             return;
         }
 
@@ -170,9 +176,10 @@ const LessonPreview = ({ lesson }: LessonPreviewProps) => {
                     <video
                         ref={videoRef}
                         controls
+                        preload="metadata"
                         className="w-full h-full object-contain"
                         src={url}
-                        controlsList="nodownload nofullscreen"
+                        controlsList="nodownload"
                         disablePictureInPicture
                         onContextMenu={(e) => e.preventDefault()}
                     >
