@@ -1,10 +1,4 @@
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Edit, Eye, EyeOff, Plus, Trash2, Video } from "lucide-react";
@@ -13,6 +7,7 @@ import { useAppDispatch } from "@/redux/hook";
 import { deleteLesson, togglePublishLesson } from "@/redux/slice/lesson";
 import { toast } from "sonner";
 import { LessonDialog } from "./LessonDialog";
+import { MetadataInfo } from "@/components/MetadataInfo";
 
 export default function Lesson({ lessons, modules, courses, filter }) {
     const dispatch = useAppDispatch();
@@ -119,6 +114,12 @@ export default function Lesson({ lessons, modules, courses, filter }) {
                                                                 {lesson.category}
                                                             </Badge>
                                                         )}
+                                                    </div>
+                                                    <div className="mt-3">
+                                                        <MetadataInfo
+                                                            createdBy={lesson.createdBy}
+                                                            updatedBy={lesson.updatedBy}
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-2">

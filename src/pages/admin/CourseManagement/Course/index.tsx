@@ -1,11 +1,4 @@
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from "@/components/ui/card";
 import { BookOpen, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +10,7 @@ import { deleteCourse, togglePublishCourse } from "@/redux/slice/course";
 import { Course_Types } from "@/types";
 import { toast } from "sonner";
 import { CourseDialog } from "./CourseDialog";
+import { MetadataInfo } from "@/components/MetadataInfo";
 
 export default function Course({ courses, filter, setFilter }) {
     const dispatch = useAppDispatch();
@@ -121,6 +115,12 @@ export default function Course({ courses, filter, setFilter }) {
                                             <span className="font-semibold">
                                                 ${course.price}
                                             </span>
+                                        </div>
+                                        <div className="mt-4 pt-4 border-t">
+                                            <MetadataInfo
+                                                createdBy={course.createdBy}
+                                                updatedBy={course.updatedBy}
+                                            />
                                         </div>
                                     </CardContent>
                                     <CardFooter className="flex gap-2">
