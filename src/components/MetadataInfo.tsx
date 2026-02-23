@@ -48,16 +48,16 @@ export function MetadataInfo({ createdBy, updatedBy, className = "" }: MetadataI
 
     return (
         <TooltipProvider>
-            <div className={`flex items-center flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground ${className}`}>
+            <div className={`flex items-center flex-wrap gap-2 text-xs ${className}`}>
                 {/* Created By */}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 cursor-help">
-                            <User className="h-3 w-3 flex-shrink-0" />
-                            <span>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 hover:bg-muted cursor-help transition-colors">
+                            <User className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                            <span className="text-muted-foreground">
                                 <strong className="text-foreground">{createdBy?.user?.concatedName || "Unknown"}</strong>
                                 {createdBy?.date && (
-                                    <> {formatDate(createdBy.date)}</>
+                                    <span className="text-muted-foreground"> {formatDate(createdBy.date)}</span>
                                 )}
                             </span>
                         </div>
@@ -77,15 +77,12 @@ export function MetadataInfo({ createdBy, updatedBy, className = "" }: MetadataI
                     </TooltipContent>
                 </Tooltip>
 
-                {/* Separator */}
-                <span className="text-muted-foreground/40">•</span>
-
                 {/* Updated By */}
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 cursor-help">
-                            <Clock className="h-3 w-3 flex-shrink-0" />
-                            <span>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 hover:bg-muted cursor-help transition-colors">
+                            <Clock className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                            <span className="text-muted-foreground">
                                 Updated {updatedBy?.date && formatDate(updatedBy.date)}
                                 {updatedBy?.user && (
                                     <> by <strong className="text-foreground">{updatedBy.user.concatedName || "Unknown"}</strong></>
