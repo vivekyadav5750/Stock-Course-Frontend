@@ -21,6 +21,18 @@ export type User_Types = {
   category?: string[];
 };
 
+export type UserInfo = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  concatedName: string;
+};
+
+export type MetadataInfo = {
+  user: UserInfo;
+  date: string;
+};
+
 export type Course_Types = {
   _id?: string;
   title: string;
@@ -40,6 +52,8 @@ export type Course_Types = {
   isPublished?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  createdBy?: MetadataInfo;
+  updatedBy?: MetadataInfo;
 };
 
 export type Module_Types = {
@@ -54,6 +68,8 @@ export type Module_Types = {
   createdAt?: string;
   updatedAt?: string;
   category?: string;
+  createdBy?: MetadataInfo;
+  updatedBy?: MetadataInfo;
 };
 
 export type Lesson_Types = {
@@ -78,7 +94,8 @@ export type Lesson_Types = {
   isPreview?: boolean;
   createdAt?: string;
   updatedAt?: string;
-
+  createdBy?: MetadataInfo;
+  updatedBy?: MetadataInfo;
 };
 
 export const CONTENT_TYPES = {

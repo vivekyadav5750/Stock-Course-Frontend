@@ -2,22 +2,21 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Edit, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useAppDispatch } from "@/redux/hook";
 import { deleteModule, togglePublishModule } from "@/redux/slice/module";
-import { Course_Types, Module_Types } from "@/types";
 import { toast } from "sonner";
 import { ModuleDialog } from "./ModuleDialog";
+import { MetadataInfo } from "@/components/MetadataInfo";
 
 export default function Module({ modules, courses, filter }) {
+    console.log("Modules:", modules);
     const dispatch = useAppDispatch();
     const [moduleDialog, setModuleDialog] = useState({ open: false, data: null });
 
@@ -102,6 +101,12 @@ export default function Module({ modules, courses, filter }) {
                                                                 {module.category}
                                                             </Badge>
                                                         )}
+                                                    </div>
+                                                    <div className="mt-3">
+                                                        <MetadataInfo
+                                                            createdBy={module.createdBy}
+                                                            updatedBy={module.updatedBy}
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-2">
